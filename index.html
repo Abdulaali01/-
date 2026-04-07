@@ -74,10 +74,10 @@ body {
 }
 #map { height: 100%; width: 100%; z-index: 1; }
 
-/* Map Summary Overlay - positioned top right */
+/* Map Summary Overlay - positioned BOTTOM RIGHT now */
 .map-summary-overlay {
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     background: rgba(255,255,255,0.95);
     border-radius: 15px;
@@ -163,8 +163,9 @@ body {
 }
 .hidden { display: none !important; }
 
-/* Map Table Overlay */
+/* Map Table Overlay - HIDDEN by default now */
 .map-table-overlay {
+    display: none !important;
     position: absolute;
     bottom: 20px;
     left: 20px;
@@ -204,7 +205,9 @@ body {
     border-bottom: 1px solid #eee;
 }
 
+/* Municipality labels - HIDDEN */
 .municipality-label {
+    display: none !important;
     background: rgba(255,255,255,0.95);
     border: 2px solid #1e3c72;
     border-radius: 10px;
@@ -291,8 +294,9 @@ body {
     border-radius: 10px; background: #f8f9fa; padding: 10px; 
 }
 
+/* Compare Section - Always visible at bottom */
 #compareSection {
-    display: none;
+    display: block !important;
     margin-top: 20px;
     padding: 0 20px 20px 20px;
 }
@@ -384,6 +388,54 @@ body {
     .compare-section { grid-template-columns: 1fr; }
     .map-summary-overlay { display: none !important; }
 }
+
+/* Slide Export Mode - 16:9 HD */
+.slide-export-mode {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 1920px !important;
+    height: 1080px !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    z-index: 99999 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.slide-export-mode .main-container {
+    margin-top: 0 !important;
+    height: 540px !important;
+    min-height: 540px !important;
+}
+
+.slide-export-mode .map-wrapper {
+    height: 520px !important;
+    min-height: 520px !important;
+}
+
+.slide-export-mode #compareSection {
+    height: 480px !important;
+    margin-top: 10px !important;
+}
+
+.slide-export-mode .compare-section {
+    height: 400px !important;
+}
+
+.slide-export-mode .quarter-card {
+    padding: 15px !important;
+}
+
+.slide-export-mode .quarter-value {
+    font-size: 36px !important;
+}
+
+.slide-export-mode .top-bar {
+    display: none !important;
+}
 </style>
 </head>
 
@@ -430,7 +482,7 @@ body {
         <div id="map"></div>
         <div id="labelsContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></div>
         
-        <!-- Map Summary Overlay - positioned top right -->
+        <!-- Map Summary Overlay - positioned BOTTOM RIGHT -->
         <div class="map-summary-overlay" id="mapSummaryOverlay">
             <h4>📊 إجمالي النسب</h4>
             <div class="summary-box-map participation" id="participationBox">
@@ -448,7 +500,7 @@ body {
             </div>
         </div>
 
-        <!-- Map Table Overlay - positioned bottom left -->
+        <!-- Map Table Overlay - HIDDEN -->
         <div class="map-table-overlay" id="mapTableOverlay">
             <h4>📅 توزيع البلاغات</h4>
             <table><thead><tr><th>الشهر</th><th>البلاغات</th></tr></thead><tbody id="mapTableBody"></tbody></table>
@@ -461,6 +513,7 @@ body {
     </div>
 </div>
 
+<!-- Quarter Comparison - Always visible at bottom -->
 <div id="compareSection">
     <div class="card">
         <div class="card-title">📊 مقارنة الأداء الربع سنوي</div>
@@ -473,7 +526,7 @@ body {
 <script>
 Chart.register(ChartDataLabels);
 
-let map = null, polygonLayer = null, rawData = [], visibleMunicipalities = [], chart = null, allMunicipalities = new Set(), isCompareVisible = false;
+let map = null, polygonLayer = null, rawData = [], visibleMunicipalities = [], chart = null, allMunicipalities = new Set(), isCompareVisible = true;
 let labelPositions = {};
 let isDragging = false;
 let draggedLabel = null;
@@ -839,94 +892,15 @@ function fillSelect(id, set) {
     [...set].sort().forEach(v => { el.innerHTML += `<option value="${v}">${v}</option>`; });
 }
 
+// Municipality labels - NOW HIDDEN (function kept for compatibility but does nothing)
 function createDraggableLabel(muni, count, container) {
-    let left = 0, top = 0;
-    if (labelPositions[muni.name]) {
-        left = labelPositions[muni.name].x;
-        top = labelPositions[muni.name].y;
-    } else {
-        const lats = muni.points.map(p => p[1]), lngs = muni.points.map(p => p[0]);
-        const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
-        const centerLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
-        const point = map.latLngToContainerPoint([centerLat, centerLng]);
-        left = point.x - 70;
-        top = point.y - 30;
-    }
-
-    const label = document.createElement('div');
-    label.className = 'municipality-label';
-    label.innerHTML = `<div class="muni-name">${muni.name}</div><div class="muni-count">${count.toLocaleString()} بلاغ</div>`;
-    label.style.left = left + 'px';
-    label.style.top = top + 'px';
-    label.style.pointerEvents = 'auto';
-    label.style.borderColor = muni.color;
-
-    label.addEventListener('mousedown', function(e) {
-        isDragging = true;
-        draggedLabel = label;
-        draggedLabel.classList.add('dragging');
-        dragOffset.x = e.clientX - label.offsetLeft;
-        dragOffset.y = e.clientY - label.offsetTop;
-        e.preventDefault();
-        e.stopPropagation();
-    });
-
-    container.appendChild(label);
-    return label;
+    // Labels are now hidden - do not create them
+    return null;
 }
 
-document.addEventListener('mousemove', function(e) {
-    if (!isDragging || !draggedLabel) return;
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
-    draggedLabel.style.left = newX + 'px';
-    draggedLabel.style.top = newY + 'px';
-});
-
-document.addEventListener('mouseup', function() {
-    if (isDragging && draggedLabel) {
-        const muniName = draggedLabel.querySelector('.muni-name').textContent;
-        labelPositions[muniName] = {
-            x: draggedLabel.offsetLeft,
-            y: draggedLabel.offsetTop
-        };
-        draggedLabel.classList.remove('dragging');
-        isDragging = false;
-        draggedLabel = null;
-    }
-});
-
 function updateMapTable() {
-    const tbody = document.getElementById('mapTableBody');
-    tbody.innerHTML = '';
-
-    let monthlyData = {};
-
-    visibleMunicipalities.forEach(muni => {
-        for (let month in muni.monthly) {
-            if (!monthlyData[month]) monthlyData[month] = 0;
-            monthlyData[month] += muni.monthly[month];
-        }
-    });
-
-    if (Object.keys(monthlyData).length === 0 && window.globalMonthlyCounts) {
-        monthlyData = window.globalMonthlyCounts;
-    }
-
-    const sortedMonths = Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b));
-
-    if (sortedMonths.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2">لا توجد بيانات</td></tr>';
-        return;
-    }
-
-    sortedMonths.forEach(month => {
-        const monthName = monthNames.arabic[parseInt(month) - 1];
-        const count = monthlyData[month];
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${monthName}</td><td>${count.toLocaleString()}</td>`;
-        tbody.appendChild(row);
-    });
+    // Table is hidden - do nothing
+    return;
 }
 
 function applyCurrentFilter() {
@@ -948,7 +922,7 @@ function applyCurrentFilter() {
     buildExport();
     updateMapTable();
     updateMapSummary();
-    if (isCompareVisible) updateQuarterComparison();
+    updateQuarterComparison();
 }
 
 function createPolygonFromPoints(points, color) {
@@ -980,19 +954,17 @@ function drawMap() {
     if (!polygonLayer) return;
     polygonLayer.clearLayers();
 
+    // Clear labels container (labels are hidden now)
     const labelsContainer = document.getElementById('labelsContainer');
-    labelsContainer.innerHTML = '';
+    if (labelsContainer) labelsContainer.innerHTML = '';
 
     if (visibleMunicipalities.length === 0) return;
     const quarter = document.getElementById("quarterFilter").value;
 
     visibleMunicipalities.forEach(muni => {
-        const count = quarter === "all" ? muni.totalCount : muni.quarters[quarter];
-
         const polygon = createPolygonFromPoints(muni.points, muni.color);
         polygon.addTo(polygonLayer);
-
-        createDraggableLabel(muni, count, labelsContainer);
+        // Labels are now hidden - do not create them
     });
 
     if (visibleMunicipalities.length > 0 && map) {
@@ -1165,48 +1137,92 @@ function showNotification(message) {
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-// Export Slide Function - Fixed
+// Export Slide Function - HD 16:9
 function exportSlide() {
     const captureArea = document.getElementById('captureArea');
-    if (!captureArea) {
+    const compareSection = document.getElementById('compareSection');
+    const body = document.body;
+    
+    if (!captureArea || !compareSection) {
         alert('لا يوجد محتوى للتصدير');
         return;
     }
     
     // Show loading notification
-    showNotification('⏳ جاري تصدير الصورة...');
+    showNotification('⏳ جاري تصدير السلايد...');
     
-    // Use html2canvas to capture the dashboard
-    html2canvas(captureArea, {
-        scale: 2, // Higher resolution
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#1e3c72',
-        logging: false
-    }).then(canvas => {
-        // Convert to blob and save
-        canvas.toBlob(function(blob) {
-            if (blob) {
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                saveAs(blob, `تحليل_البلديات_${timestamp}.png`);
-                showNotification('✅ تم تصدير الصورة بنجاح');
-            } else {
-                // Fallback: use data URL
-                const dataUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = `تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
-                link.href = dataUrl;
-                link.click();
-                showNotification('✅ تم تصدير الصورة بنجاح');
-            }
-        }, 'image/png');
-    }).catch(error => {
-        console.error('Export error:', error);
-        alert('حدث خطأ أثناء التصدير: ' + error.message);
-    });
+    // Add slide export mode class for 16:9 layout
+    body.classList.add('slide-export-mode');
+    
+    // Ensure compare section is visible
+    compareSection.style.display = 'block';
+    
+    // Wait for layout to settle
+    setTimeout(() => {
+        // Create a wrapper for full capture
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:fixed; top:0; left:0; width:1920px; height:1080px; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); z-index:99999; padding:20px; display:flex; flex-direction:column;';
+        
+        // Clone the elements
+        const mainClone = captureArea.cloneNode(true);
+        const compareClone = compareSection.cloneNode(true);
+        
+        // Adjust styles for slide
+        mainClone.style.marginTop = '0';
+        mainClone.style.height = '520px';
+        mainClone.style.minHeight = '520px';
+        
+        compareClone.style.marginTop = '10px';
+        compareClone.style.height = '480px';
+        compareClone.style.padding = '0';
+        
+        wrapper.appendChild(mainClone);
+        wrapper.appendChild(compareClone);
+        document.body.appendChild(wrapper);
+        
+        // Use html2canvas to capture
+        html2canvas(wrapper, {
+            scale: 2, // HD quality
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false,
+            width: 1920,
+            height: 1080
+        }).then(canvas => {
+            // Remove wrapper
+            document.body.removeChild(wrapper);
+            body.classList.remove('slide-export-mode');
+            
+            // Convert to blob and save
+            canvas.toBlob(function(blob) {
+                if (blob) {
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
+                    showNotification('✅ تم تصدير السلايد بنجاح (1920x1080 HD)');
+                } else {
+                    // Fallback: use data URL
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `سلايد_تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+                    link.href = dataUrl;
+                    link.click();
+                    showNotification('✅ تم تصدير السلايد بنجاح (1920x1080 HD)');
+                }
+            }, 'image/png');
+        }).catch(error => {
+            console.error('Export error:', error);
+            body.classList.remove('slide-export-mode');
+            alert('حدث خطأ أثناء التصدير: ' + error.message);
+        });
+    }, 500);
 }
 
-document.addEventListener('DOMContentLoaded', function() { initMap(); });
+document.addEventListener('DOMContentLoaded', function() { 
+    initMap(); 
+    // Show quarter comparison by default
+    updateQuarterComparison();
+});
 </script>
 </body>
 </html>

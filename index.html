@@ -342,6 +342,23 @@ body {
 .exporting .top-bar {
     display: none !important;
 }
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
 </style>
 </head>
 
@@ -736,7 +753,7 @@ function processRows(rows) {
     const muniMap = {};
     Object.values(districtMap).forEach(d => {
         if (!muniMap[d.municipality]) {
-            muniMap[d.municipality] = { name: d.municipality, districts: [], totalCount: 0, quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 }, points: [], satisfaction: { Q1: {satisfied: 0, unsatisfied: 0}, Q2: {satisfied: 0, unsatisfied: 0}, Q3: {satisfied: 0, unsatisfied: 0}, Q4: {satisfied: 0, unsatisfied: 0} }, monthly: {} };
+            muniMap[d.municipality] = { name: d.municipality, districts: [], totalCount: 0, quarters: { Q1: 0, Q2: 0, QQ3: 0, Q4: 0 }, points: [], satisfaction: { Q1: {satisfied: 0, unsatisfied: 0}, Q2: {satisfied: 0, unsatisfied: 0}, Q3: {satisfied: 0, unsatisfied: 0}, Q4: {satisfied: 0, unsatisfied: 0} }, monthly: {} };
         }
         muniMap[d.municipality].districts.push(d);
         muniMap[d.municipality].totalCount += d.totalCount;
@@ -820,7 +837,7 @@ function createPolygonFromPoints(points, color) {
         }
     } catch (e) {}
     const lats = points.map(p => p[1]), lngs = points.map(p => p[0]);
-    const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, [Math.max(...lngs) + 0.01]];
+    const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
     return L.rectangle(bounds, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
 }
 

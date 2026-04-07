@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
 <style>
@@ -820,7 +820,7 @@ function createPolygonFromPoints(points, color) {
         }
     } catch (e) {}
     const lats = points.map(p => p[1]), lngs = points.map(p => p[0]);
-    const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
+    const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, [Math.max(...lngs) + 0.01]];
     return L.rectangle(bounds, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
 }
 
@@ -1009,7 +1009,7 @@ function showNotification(message) {
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-// Export Slide Function - Capture only visible content
+// Export Slide Function - Fixed using html2canvas
 async function exportSlide() {
     const body = document.body;
     const mainContainer = document.getElementById('captureArea');
@@ -1029,46 +1029,61 @@ async function exportSlide() {
         map.invalidateSize();
     }
     
+    // Force chart to render
+    if (chart) {
+        chart.update('none');
+    }
+    
     // Wait again for render
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
-        // Create a wrapper with exact content size
+        // Create a wrapper div to hold both sections
         const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:fixed; top:0; left:0; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding:20px; z-index:99999;';
+        wrapper.style.cssText = 'position:fixed; top:0; left:0; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding:20px; z-index:99999; width:auto; height:auto;';
         
-        // Calculate exact dimensions needed
-        const mainRect = mainContainer.getBoundingClientRect();
-        const compareRect = compareSection.getBoundingClientRect();
-        
-        // Set wrapper size to fit content exactly
-        const totalWidth = Math.max(mainRect.width, compareRect.width) + 40; // + padding
-        const totalHeight = mainRect.height + compareRect.height + 60; // + gaps and padding
-        
-        wrapper.style.width = totalWidth + 'px';
-        wrapper.style.height = totalHeight + 'px';
-        
-        // Clone elements
+        // Clone main container
         const mainClone = mainContainer.cloneNode(true);
-        const compareClone = compareSection.cloneNode(true);
-        
-        // Remove margins in clone
         mainClone.style.margin = '0';
         mainClone.style.marginBottom = '20px';
+        mainClone.style.height = '600px';
+        mainClone.style.width = '100%';
+        
+        // Clone compare section
+        const compareClone = compareSection.cloneNode(true);
         compareClone.style.margin = '0';
         compareClone.style.padding = '0';
+        compareClone.style.width = '100%';
         
         wrapper.appendChild(mainClone);
         wrapper.appendChild(compareClone);
         document.body.appendChild(wrapper);
         
-        // Capture the wrapper
-        const blob = await domtoimage.toBlob(wrapper, {
-            quality: 1,
-            bgcolor: '#1e3c72',
-            style: {
-                'transform': 'scale(1)',
-                'transform-origin': 'top left'
+        // Calculate dimensions
+        const mainRect = mainClone.getBoundingClientRect();
+        const compareRect = compareClone.getBoundingClientRect();
+        const totalWidth = Math.max(mainRect.width, compareRect.width);
+        const totalHeight = mainRect.height + compareRect.height + 40;
+        
+        wrapper.style.width = totalWidth + 'px';
+        wrapper.style.height = totalHeight + 'px';
+        
+        // Use html2canvas with proper options for Canvas support
+        const canvas = await html2canvas(wrapper, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#1e3c72',
+            logging: false,
+            onclone: function(clonedDoc) {
+                // Ensure all canvases are rendered in clone
+                const canvases = clonedDoc.querySelectorAll('canvas');
+                canvases.forEach(canvas => {
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.save();
+                    }
+                });
             }
         });
         
@@ -1076,11 +1091,22 @@ async function exportSlide() {
         document.body.removeChild(wrapper);
         body.classList.remove('exporting');
         
-        // Save the image
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-        saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
-        
-        showNotification('✅ تم تصدير السلايد بنجاح');
+        // Convert to blob and save
+        canvas.toBlob(function(blob) {
+            if (blob) {
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
+                showNotification('✅ تم تصدير السلايد بنجاح');
+            } else {
+                // Fallback
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `سلايد_تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+                link.href = dataUrl;
+                link.click();
+                showNotification('✅ تم تصدير السلايد بنجاح');
+            }
+        }, 'image/png');
         
     } catch (error) {
         console.error('Export error:', error);

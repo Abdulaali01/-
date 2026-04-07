@@ -224,8 +224,9 @@ body {
 .quarter-months { font-size: 11px; color: #666; margin-bottom: 10px; }
 .quarter-value { font-size: 28px; font-weight: bold; color: #1e3c72; margin: 8px 0; }
 
+/* Satisfaction boxes with unsatisfied */
 .satisfaction-boxes { display: flex; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
-.satisfaction-box { flex: 1; padding: 8px 5px; border-radius: 8px; text-align: center; font-size: 11px; min-width: 70px; }
+.satisfaction-box { flex: 1; padding: 8px 5px; border-radius: 8px; text-align: center; font-size: 11px; min-width: 70px; position: relative; }
 .satisfaction-box.satisfied { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; }
 .satisfaction-box.unsatisfied { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545; }
 .satisfaction-box.participation { background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border: 2px solid #17a2b8; }
@@ -242,10 +243,11 @@ body {
 .satisfaction-box.average .percentage { color: #856404; }
 .satisfaction-box .count { font-size: 10px; color: #666; margin-top: 2px; }
 
+/* Close button for unsatisfied box */
 .close-btn {
     position: absolute;
-    top: 5px;
-    left: 5px;
+    top: -8px;
+    left: -8px;
     background: #dc3545;
     color: white;
     border: none;
@@ -260,6 +262,7 @@ body {
     z-index: 10;
 }
 
+/* Editable satisfaction inputs */
 .satisfaction-box input.percentage-input {
     width: 40px;
     border: 2px solid transparent;
@@ -279,8 +282,9 @@ body {
     border-color: #1e3c72;
 }
 
+/* Summary Section - 3 boxes */
 .summary-section {
-    display: grid;
+    display: none;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-bottom: 20px;
@@ -293,10 +297,11 @@ body {
     text-align: center;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     border: 3px solid;
+    position: relative;
 }
 .summary-box.participation-total { border-color: #17a2b8; background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); }
 .summary-box.satisfied-total { border-color: #28a745; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); }
-.summary-box.unsatisfied-total { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); position: relative; }
+.summary-box.unsatisfied-total { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); }
 .summary-box .summary-title {
     font-size: 16px;
     font-weight: bold;
@@ -418,22 +423,20 @@ body {
     </div>
 </div>
 
-<div class="summary-section" id="summarySection" style="display: none;">
+<!-- Summary Section - 3 Total Boxes -->
+<div class="summary-section" id="summarySection">
     <div class="summary-box participation-total">
         <div class="summary-title">📊 إجمالي نسبة المشاركين</div>
         <div class="summary-value"><input type="number" class="summary-input" id="summary-participation" value="0" min="0" max="100" onchange="updateSummaryValue('participation')">%</div>
-        <div class="summary-percentage">على مدار الأرباع</div>
     </div>
     <div class="summary-box satisfied-total">
         <div class="summary-title">😊 إجمالي نسبة الراضين</div>
         <div class="summary-value"><input type="number" class="summary-input" id="summary-satisfied" value="0" min="0" max="100" onchange="updateSummaryValue('satisfied')">%</div>
-        <div class="summary-percentage">على مدار الأرباع</div>
     </div>
     <div class="summary-box unsatisfied-total" id="unsatisfiedSummaryBox">
         <button class="summary-close-btn" onclick="hideUnsatisfiedSummary()">×</button>
         <div class="summary-title">😞 إجمالي نسبة غير الراضين</div>
         <div class="summary-value"><input type="number" class="summary-input" id="summary-unsatisfied" value="0" min="0" max="100" onchange="updateSummaryValue('unsatisfied')">%</div>
-        <div class="summary-percentage">على مدار الأرباع</div>
     </div>
 </div>
 
@@ -449,18 +452,92 @@ body {
 <script>
 Chart.register(ChartDataLabels);
 
-let map = null;
-let polygonLayer = null;
-let rawData = [];
-let visibleMunicipalities = [];
-let chart = null;
-let allMunicipalities = new Set();
-let isCompareVisible = false;
+let map = null, polygonLayer = null, rawData = [], visibleMunicipalities = [], chart = null, allMunicipalities = new Set(), isCompareVisible = false;
 let labelPositions = {};
 let isDragging = false;
 let draggedLabel = null;
 let dragOffset = { x: 0, y: 0 };
 
+const municipalityColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b', '#2980b9', '#8e44ad', '#27ae60', '#f1c40f', '#e91e63'];
+
+const monthNames = {
+    arabic: ['يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+    english: ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+};
+
+const getQuarterFromDate = (dateStr) => {
+    if (!dateStr || dateStr === 'غير معروف' || dateStr === '') return null;
+    dateStr = String(dateStr).toLowerCase().trim();
+    let month = null;
+    for (let i = 0; i < monthNames.arabic.length; i++) {
+        if (dateStr.includes(monthNames.arabic[i].toLowerCase())) { month = i + 1; break; }
+    }
+    if (!month) {
+        for (let i = 0; i < monthNames.english.length; i++) {
+            if (dateStr.includes(monthNames.english[i])) { month = i + 1; break; }
+        }
+    }
+    if (!month && dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length >= 2) {
+            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
+            month = (m1 > 12 && m2 <= 12) ? m2 : m1;
+        }
+    }
+    if (!month && dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length >= 3) {
+            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
+            month = (m1 > 31) ? m2 : (m2 > 12 ? m1 : m1);
+        } else if (parts.length === 2) {
+            month = parseInt(parts[0]);
+        }
+    }
+    if (!month && dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)) {
+        month = parseInt(dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)[1]);
+    }
+    if (!month || isNaN(month) || month < 1 || month > 12) return null;
+    if (month <= 3) return 'Q1';
+    if (month <= 6) return 'Q2';
+    if (month <= 9) return 'Q3';
+    return 'Q4';
+};
+
+const getMonthFromDate = (dateStr) => {
+    if (!dateStr || dateStr === 'غير معروف' || dateStr === '') return null;
+    dateStr = String(dateStr).toLowerCase().trim();
+    let month = null;
+    for (let i = 0; i < monthNames.arabic.length; i++) {
+        if (dateStr.includes(monthNames.arabic[i].toLowerCase())) { month = i + 1; break; }
+    }
+    if (!month) {
+        for (let i = 0; i < monthNames.english.length; i++) {
+            if (dateStr.includes(monthNames.english[i])) { month = i + 1; break; }
+        }
+    }
+    if (!month && dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length >= 2) {
+            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
+            month = (m1 > 12 && m2 <= 12) ? m2 : m1;
+        }
+    }
+    if (!month && dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length >= 3) {
+            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
+            month = (m1 > 31) ? m2 : (m2 > 12 ? m1 : m1);
+        } else if (parts.length === 2) {
+            month = parseInt(parts[0]);
+        }
+    }
+    if (!month && dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)) {
+        month = parseInt(dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)[1]);
+    }
+    return month;
+};
+
+// Manual satisfaction values with unsatisfied
 let manualSatisfactionValues = { 
     Q1: { satisfied: null, unsatisfied: null, participation: null }, 
     Q2: { satisfied: null, unsatisfied: null, participation: null }, 
@@ -468,118 +545,12 @@ let manualSatisfactionValues = {
     Q4: { satisfied: null, unsatisfied: null, participation: null } 
 };
 
-let manualSummaryValues = {
+// Summary values
+let summaryValues = {
     participation: null,
     satisfied: null,
     unsatisfied: null
 };
-
-const municipalityColors = [
-    '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', 
-    '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b', 
-    '#2980b9', '#8e44ad', '#27ae60', '#f1c40f', '#e91e63'
-];
-
-const monthNames = {
-    arabic: ['يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
-    english: ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-};
-
-function getQuarterFromDate(dateStr) {
-    if (!dateStr || dateStr === 'غير معروف' || dateStr === '') return null;
-    dateStr = String(dateStr).toLowerCase().trim();
-    let month = null;
-    
-    for (let i = 0; i < monthNames.arabic.length; i++) {
-        if (dateStr.includes(monthNames.arabic[i].toLowerCase())) {
-            month = i + 1;
-            break;
-        }
-    }
-    
-    if (!month) {
-        for (let i = 0; i < monthNames.english.length; i++) {
-            if (dateStr.includes(monthNames.english[i])) {
-                month = i + 1;
-                break;
-            }
-        }
-    }
-    
-    if (!month && dateStr.includes('/')) {
-        const parts = dateStr.split('/');
-        if (parts.length >= 2) {
-            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
-            month = (m1 > 12 && m2 <= 12) ? m2 : m1;
-        }
-    }
-    
-    if (!month && dateStr.includes('-')) {
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
-            month = (m1 > 31) ? m2 : (m2 > 12 ? m1 : m1);
-        } else if (parts.length === 2) {
-            month = parseInt(parts[0]);
-        }
-    }
-    
-    if (!month && dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)) {
-        month = parseInt(dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)[1]);
-    }
-    
-    if (!month || isNaN(month) || month < 1 || month > 12) return null;
-    if (month <= 3) return 'Q1';
-    if (month <= 6) return 'Q2';
-    if (month <= 9) return 'Q3';
-    return 'Q4';
-}
-
-function getMonthFromDate(dateStr) {
-    if (!dateStr || dateStr === 'غير معروف' || dateStr === '') return null;
-    dateStr = String(dateStr).toLowerCase().trim();
-    let month = null;
-    
-    for (let i = 0; i < monthNames.arabic.length; i++) {
-        if (dateStr.includes(monthNames.arabic[i].toLowerCase())) {
-            month = i + 1;
-            break;
-        }
-    }
-    
-    if (!month) {
-        for (let i = 0; i < monthNames.english.length; i++) {
-            if (dateStr.includes(monthNames.english[i])) {
-                month = i + 1;
-                break;
-            }
-        }
-    }
-    
-    if (!month && dateStr.includes('/')) {
-        const parts = dateStr.split('/');
-        if (parts.length >= 2) {
-            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
-            month = (m1 > 12 && m2 <= 12) ? m2 : m1;
-        }
-    }
-    
-    if (!month && dateStr.includes('-')) {
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
-            month = (m1 > 31) ? m2 : (m2 > 12 ? m1 : m1);
-        } else if (parts.length === 2) {
-            month = parseInt(parts[0]);
-        }
-    }
-    
-    if (!month && dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)) {
-        month = parseInt(dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)[1]);
-    }
-    
-    return month;
-}
 
 function updateSatisfactionCount(quarter, type) {
     const input = document.getElementById(`sat-${quarter}-${type}`);
@@ -588,7 +559,16 @@ function updateSatisfactionCount(quarter, type) {
     if (value > 100) value = 100;
     input.value = value;
     manualSatisfactionValues[quarter][type] = value;
-    updateSummaryFromQuarters();
+    
+    // Auto-calculate participation = satisfied + unsatisfied
+    if (type === 'satisfied' || type === 'unsatisfied') {
+        const sat = manualSatisfactionValues[quarter].satisfied || 0;
+        const unsat = manualSatisfactionValues[quarter].unsatisfied || 0;
+        const participation = Math.min(sat + unsat, 100);
+        manualSatisfactionValues[quarter].participation = participation;
+        const partInput = document.getElementById(`sat-${quarter}-participation`);
+        if (partInput) partInput.value = participation;
+    }
 }
 
 function validatePercentage(quarter) {
@@ -598,65 +578,6 @@ function validatePercentage(quarter) {
     if (sat > 100) sat = 100;
     satInput.value = sat;
     manualSatisfactionValues[quarter].satisfied = sat;
-    updateSummaryFromQuarters();
-}
-
-function updateSummaryValue(type) {
-    const input = document.getElementById(`summary-${type}`);
-    let value = parseInt(input.value) || 0;
-    if (value < 0) value = 0;
-    if (value > 100) value = 100;
-    input.value = value;
-    manualSummaryValues[type] = value;
-}
-
-function updateSummaryFromQuarters() {
-    if (manualSummaryValues.participation === null) {
-        let totalParticipation = 0, count = 0;
-        ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
-            if (manualSatisfactionValues[q].participation !== null) {
-                totalParticipation += manualSatisfactionValues[q].participation;
-                count++;
-            }
-        });
-        if (count > 0) {
-            document.getElementById('summary-participation').value = Math.round(totalParticipation / count);
-        }
-    }
-    
-    if (manualSummaryValues.satisfied === null) {
-        let totalSatisfied = 0, count = 0;
-        ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
-            if (manualSatisfactionValues[q].satisfied !== null) {
-                totalSatisfied += manualSatisfactionValues[q].satisfied;
-                count++;
-            }
-        });
-        if (count > 0) {
-            document.getElementById('summary-satisfied').value = Math.round(totalSatisfied / count);
-        }
-    }
-    
-    if (manualSummaryValues.unsatisfied === null) {
-        let totalUnsatisfied = 0, count = 0;
-        ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
-            if (manualSatisfactionValues[q].unsatisfied !== null) {
-                totalUnsatisfied += manualSatisfactionValues[q].unsatisfied;
-                count++;
-            }
-        });
-        if (count > 0) {
-            document.getElementById('summary-unsatisfied').value = Math.round(totalUnsatisfied / count);
-        }
-    }
-}
-
-function hideUnsatisfiedSummary() {
-    document.getElementById('unsatisfiedSummaryBox').classList.add('hidden');
-}
-
-function showUnsatisfiedSummary() {
-    document.getElementById('unsatisfiedSummaryBox').classList.remove('hidden');
 }
 
 function resetSatisfactionValues() {
@@ -666,10 +587,59 @@ function resetSatisfactionValues() {
         Q3: { satisfied: null, unsatisfied: null, participation: null }, 
         Q4: { satisfied: null, unsatisfied: null, participation: null } 
     };
-    manualSummaryValues = { participation: null, satisfied: null, unsatisfied: null };
-    showUnsatisfiedSummary();
+    summaryValues = { participation: null, satisfied: null, unsatisfied: null };
     updateQuarterComparison();
+    updateSummarySection();
     showNotification('✅ تم إعادة ضبط النسب للقيم المحسوبة');
+}
+
+// Hide unsatisfied summary box
+function hideUnsatisfiedSummary() {
+    document.getElementById('unsatisfiedSummaryBox').classList.add('hidden');
+}
+
+// Hide unsatisfied box for specific quarter
+function hideUnsatisfiedBox(quarter) {
+    const box = document.getElementById(`unsat-box-${quarter}`);
+    if (box) box.classList.add('hidden');
+}
+
+// Update summary values
+function updateSummaryValue(type) {
+    const input = document.getElementById(`summary-${type}`);
+    let value = parseInt(input.value) || 0;
+    if (value < 0) value = 0;
+    if (value > 100) value = 100;
+    input.value = value;
+    summaryValues[type] = value;
+}
+
+// Update summary section display
+function updateSummarySection() {
+    // Calculate totals from quarters
+    const totals = { participation: 0, satisfied: 0, unsatisfied: 0 };
+    let count = 0;
+    
+    ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
+        if (manualSatisfactionValues[q].participation !== null) {
+            totals.participation += manualSatisfactionValues[q].participation;
+            totals.satisfied += manualSatisfactionValues[q].satisfied || 0;
+            totals.unsatisfied += manualSatisfactionValues[q].unsatisfied || 0;
+            count++;
+        }
+    });
+    
+    if (count > 0) {
+        if (summaryValues.participation === null) {
+            document.getElementById('summary-participation').value = Math.round(totals.participation / count);
+        }
+        if (summaryValues.satisfied === null) {
+            document.getElementById('summary-satisfied').value = Math.round(totals.satisfied / count);
+        }
+        if (summaryValues.unsatisfied === null) {
+            document.getElementById('summary-unsatisfied').value = Math.round(totals.unsatisfied / count);
+        }
+    }
 }
 
 function initMap() {
@@ -682,19 +652,17 @@ function initMap() {
 
 function loadExcel() {
     const file = document.getElementById("file").files[0];
-    if (!file) { 
-        alert('الرجاء اختيار ملف'); 
-        return; 
-    }
+    if (!file) { alert('الرجاء اختيار ملف'); return; }
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = e => {
         const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
         processRows(rows);
     };
     reader.readAsArrayBuffer(file);
-    
-    function processRows(rows) {
+}
+
+function processRows(rows) {
     rawData = [];
     allMunicipalities.clear();
     const districtMap = {};
@@ -703,21 +671,16 @@ function loadExcel() {
     for (let i = 1; i < rows.length; i++) {
         let r = rows[i];
         if (!r || r.length < 3) continue;
-        
-        let lng = parseFloat(r[0]);
-        let lat = parseFloat(r[1]);
+        let lng = parseFloat(r[0]), lat = parseFloat(r[1]);
         let name = String(r[2] || "غير معروف").trim();
         let muni = String(r[3] || "غير محدد").trim();
         let date = r[4];
         let satisfaction = String(r[6] || "").trim();
-        
         if (isNaN(lat) || isNaN(lng)) continue;
-        
         if (typeof date === 'number') {
             const excelEpoch = new Date(1899, 11, 30);
             date = new Date(excelEpoch.getTime() + date * 24 * 60 * 60 * 1000).getMonth() + 1;
         }
-        
         allMunicipalities.add(muni);
         const quarter = getQuarterFromDate(date);
         const month = getMonthFromDate(date);
@@ -729,52 +692,23 @@ function loadExcel() {
 
         const key = name + "||" + muni;
         if (!districtMap[key]) {
-            districtMap[key] = {
-                name: name,
-                municipality: muni,
-                lat: lat,
-                lng: lng,
-                totalCount: 0,
-                quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 },
-                satisfaction: { satisfied: 0, unsatisfied: 0 },
-                monthly: {}
-            };
+            districtMap[key] = { name: name, municipality: muni, lat: lat, lng: lng, totalCount: 0, quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 }, satisfaction: { satisfied: 0, unsatisfied: 0 }, monthly: {} };
         }
-        
         districtMap[key].totalCount++;
-        if (quarter) districtMap[key].quarters[quarter]++;
-        
+        if (quarter) { districtMap[key].quarters[quarter]++; }
         if (month) {
             if (!districtMap[key].monthly[month]) districtMap[key].monthly[month] = 0;
             districtMap[key].monthly[month]++;
         }
-        
-        if (satisfaction.includes('راضي') && !satisfaction.includes('غير')) {
-            districtMap[key].satisfaction.satisfied++;
-        } else if (satisfaction.includes('غير')) {
-            districtMap[key].satisfaction.unsatisfied++;
-        }
+        if (satisfaction.includes('راضي') && !satisfaction.includes('غير')) districtMap[key].satisfaction.satisfied++;
+        else if (satisfaction.includes('غير')) districtMap[key].satisfaction.unsatisfied++;
     }
 
     const muniMap = {};
     Object.values(districtMap).forEach(d => {
         if (!muniMap[d.municipality]) {
-            muniMap[d.municipality] = {
-                name: d.municipality,
-                districts: [],
-                totalCount: 0,
-                quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 },
-                points: [],
-                satisfaction: {
-                    Q1: { satisfied: 0, unsatisfied: 0 },
-                    Q2: { satisfied: 0, unsatisfied: 0 },
-                    Q3: { satisfied: 0, unsatisfied: 0 },
-                    Q4: { satisfied: 0, unsatisfied: 0 }
-                },
-                monthly: {}
-            };
+            muniMap[d.municipality] = { name: d.municipality, districts: [], totalCount: 0, quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 }, points: [], satisfaction: { Q1: {satisfied: 0, unsatisfied: 0}, Q2: {satisfied: 0, unsatisfied: 0}, Q3: {satisfied: 0, unsatisfied: 0}, Q4: {satisfied: 0, unsatisfied: 0} }, monthly: {} };
         }
-        
         muniMap[d.municipality].districts.push(d);
         muniMap[d.municipality].totalCount += d.totalCount;
         muniMap[d.municipality].quarters.Q1 += d.quarters.Q1;
@@ -788,22 +722,10 @@ function loadExcel() {
             muniMap[d.municipality].monthly[month] += d.monthly[month];
         }
 
-        if (d.quarters.Q1 > 0) {
-            muniMap[d.municipality].satisfaction.Q1.satisfied += d.satisfaction.satisfied;
-            muniMap[d.municipality].satisfaction.Q1.unsatisfied += d.satisfaction.unsatisfied;
-        }
-        if (d.quarters.Q2 > 0) {
-            muniMap[d.municipality].satisfaction.Q2.satisfied += d.satisfaction.satisfied;
-            muniMap[d.municipality].satisfaction.Q2.unsatisfied += d.satisfaction.unsatisfied;
-        }
-        if (d.quarters.Q3 > 0) {
-            muniMap[d.municipality].satisfaction.Q3.satisfied += d.satisfaction.satisfied;
-            muniMap[d.municipality].satisfaction.Q3.unsatisfied += d.satisfaction.unsatisfied;
-        }
-        if (d.quarters.Q4 > 0) {
-            muniMap[d.municipality].satisfaction.Q4.satisfied += d.satisfaction.satisfied;
-            muniMap[d.municipality].satisfaction.Q4.unsatisfied += d.satisfaction.unsatisfied;
-        }
+        if (d.quarters.Q1 > 0) { muniMap[d.municipality].satisfaction.Q1.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q1.unsatisfied += d.satisfaction.unsatisfied; }
+        if (d.quarters.Q2 > 0) { muniMap[d.municipality].satisfaction.Q2.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q2.unsatisfied += d.satisfaction.unsatisfied; }
+        if (d.quarters.Q3 > 0) { muniMap[d.municipality].satisfaction.Q3.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q3.unsatisfied += d.satisfaction.unsatisfied; }
+        if (d.quarters.Q4 > 0) { muniMap[d.municipality].satisfaction.Q4.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q4.unsatisfied += d.satisfaction.unsatisfied; }
     });
 
     Object.values(muniMap).forEach(m => {
@@ -813,7 +735,9 @@ function loadExcel() {
     });
 
     rawData = Object.values(muniMap).sort((a, b) => b.totalCount - a.totalCount);
+
     window.globalMonthlyCounts = monthlyCounts;
+
     fillSelect("municipalityFilter", allMunicipalities);
     showNotification(`✅ تم تحميل ${rawData.length} بلدية`);
     applyCurrentFilter();
@@ -822,9 +746,7 @@ function loadExcel() {
 function fillSelect(id, set) {
     let el = document.getElementById(id);
     el.innerHTML = '<option value="all">' + (id === 'municipalityFilter' ? '🏛️ كل البلديات' : '📅 كل الأشهر') + '</option>';
-    [...set].sort().forEach(v => {
-        el.innerHTML += `<option value="${v}">${v}</option>`;
-    });
+    [...set].sort().forEach(v => { el.innerHTML += `<option value="${v}">${v}</option>`; });
 }
 
 function createDraggableLabel(muni, count, container) {
@@ -833,8 +755,7 @@ function createDraggableLabel(muni, count, container) {
         left = labelPositions[muni.name].x;
         top = labelPositions[muni.name].y;
     } else {
-        const lats = muni.points.map(p => p[1]);
-        const lngs = muni.points.map(p => p[0]);
+        const lats = muni.points.map(p => p[1]), lngs = muni.points.map(p => p[0]);
         const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
         const centerLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
         const point = map.latLngToContainerPoint([centerLat, centerLng]);
@@ -888,6 +809,7 @@ document.addEventListener('mouseup', function() {
 function updateMapTable() {
     const tbody = document.getElementById('mapTableBody');
     tbody.innerHTML = '';
+
     let monthlyData = {};
 
     visibleMunicipalities.forEach(muni => {
@@ -902,6 +824,7 @@ function updateMapTable() {
     }
 
     const sortedMonths = Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b));
+
     if (sortedMonths.length === 0) {
         tbody.innerHTML = '<tr><td colspan="2">لا توجد بيانات</td></tr>';
         return;
@@ -921,47 +844,37 @@ function applyCurrentFilter() {
     const muni = document.getElementById("municipalityFilter").value;
     const top = document.getElementById("filterSelect").value;
     const search = document.getElementById("searchBox").value.toLowerCase();
-    
-    const quarterNames = { 
-        'all': 'الكل', 
-        'Q1': 'الربع الأول', 
-        'Q2': 'الربع الثاني', 
-        'Q3': 'الربع الثالث', 
-        'Q4': 'الربع الرابع' 
-    };
+    const quarterNames = { 'all': 'الكل', 'Q1': 'الربع الأول', 'Q2': 'الربع الثاني', 'Q3': 'الربع الثالث', 'Q4': 'الربع الرابع' };
     document.getElementById("currentQuarterBadge").textContent = quarterNames[quarter] || quarter;
-    
     let filtered = rawData.filter(d => (muni === "all" || d.name === muni) && d.name.toLowerCase().includes(search));
-    
     if (quarter !== "all") {
         filtered.sort((a, b) => b.quarters[quarter] - a.quarters[quarter]);
         filtered = filtered.filter(d => d.quarters[quarter] > 0);
     }
-    
     visibleMunicipalities = filtered.slice(0, top === "all" ? Infinity : parseInt(top));
+
     drawMap();
     drawChart();
     buildExport();
     updateMapTable();
-    if (isCompareVisible) updateQuarterComparison();
+    if (isCompareVisible) {
+        updateQuarterComparison();
+        updateSummarySection();
+    }
 }
 
 function createPolygonFromPoints(points, color) {
     if (points.length < 3) {
         const center = points.reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1]], [0, 0]);
-        center[0] /= points.length;
-        center[1] /= points.length;
+        center[0] /= points.length; center[1] /= points.length;
         const radius = 0.01;
         const circlePoints = [];
         for (let i = 0; i < 36; i++) {
             const angle = (i * 10) * Math.PI / 180;
             circlePoints.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)]);
         }
-        return L.polygon(circlePoints.map(p => [p[1], p[0]]), { 
-            color: color, fillColor: color, fillOpacity: 0.3, weight: 3 
-        });
+        return L.polygon(circlePoints.map(p => [p[1], p[0]]), { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
     }
-    
     try {
         const pointsCollection = turf.points(points);
         const hull = turf.convex(pointsCollection);
@@ -970,29 +883,27 @@ function createPolygonFromPoints(points, color) {
             return L.polygon(coords, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
         }
     } catch (e) {}
-    
-    const lats = points.map(p => p[1]);
-    const lngs = points.map(p => p[0]);
-    const bounds = [
-        [Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], 
-        [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]
-    ];
+    const lats = points.map(p => p[1]), lngs = points.map(p => p[0]);
+    const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
     return L.rectangle(bounds, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
 }
 
 function drawMap() {
     if (!polygonLayer) return;
     polygonLayer.clearLayers();
+
     const labelsContainer = document.getElementById('labelsContainer');
     labelsContainer.innerHTML = '';
-    
+
     if (visibleMunicipalities.length === 0) return;
-    
     const quarter = document.getElementById("quarterFilter").value;
+
     visibleMunicipalities.forEach(muni => {
         const count = quarter === "all" ? muni.totalCount : muni.quarters[quarter];
+
         const polygon = createPolygonFromPoints(muni.points, muni.color);
         polygon.addTo(polygonLayer);
+
         createDraggableLabel(muni, count, labelsContainer);
     });
 
@@ -1010,131 +921,84 @@ function drawChart() {
     const data = visibleMunicipalities.map(m => quarter === "all" ? m.totalCount : m.quarters[quarter]);
     const colors = visibleMunicipalities.map(m => m.color);
     const canvasHeight = Math.max(400, labels.length * 50);
-    
     document.getElementById("chart").height = canvasHeight;
     document.getElementById("chartWrapper").style.height = canvasHeight + 'px';
-    
     chart = new Chart(ctx, {
         type: 'bar',
-        data: { 
-            labels: labels, 
-            datasets: [{ 
-                data: data, 
-                backgroundColor: colors, 
-                borderRadius: 8, 
-                borderSkipped: false, 
-                barThickness: 30 
-            }] 
-        },
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: 8, borderSkipped: false, barThickness: 30 }] },
         options: {
-            responsive: true, 
-            maintainAspectRatio: false, 
-            animation: false, 
-            indexAxis: 'y',
-            plugins: { 
-                legend: { display: false }, 
-                datalabels: { 
-                    anchor: 'end', 
-                    align: 'right', 
-                    color: '#333', 
-                    font: { weight: 'bold', size: 12 }, 
-                    formatter: (value) => value.toLocaleString(), 
-                    offset: 5 
-                } 
-            },
-            scales: { 
-                x: { 
-                    beginAtZero: true, 
-                    grid: { color: 'rgba(0,0,0,0.05)' }, 
-                    ticks: { callback: function(value) { return value.toLocaleString(); } } 
-                }, 
-                y: { 
-                    grid: { display: false }, 
-                    ticks: { font: { size: 12, weight: '600' }, autoSkip: false } 
-                } 
-            }
+            responsive: true, maintainAspectRatio: false, animation: false, indexAxis: 'y',
+            plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', color: '#333', font: { weight: 'bold', size: 12 }, formatter: (value) => value.toLocaleString(), offset: 5 } },
+            scales: { x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(value) { return value.toLocaleString(); } } }, y: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, autoSkip: false } } }
         }
-        
-    });function updateQuarterComparison() {
+    });
+}
+
+function updateQuarterComparison() {
     const container = document.getElementById("quarterComparison");
     const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
-    const satisfactionTotals = { 
-        Q1: { satisfied: 0, unsatisfied: 0 }, 
-        Q2: { satisfied: 0, unsatisfied: 0 }, 
-        Q3: { satisfied: 0, unsatisfied: 0 }, 
-        Q4: { satisfied: 0, unsatisfied: 0 } 
-    };
+    const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
 
     rawData.forEach(m => {
-        totals.Q1 += m.quarters.Q1;
-        totals.Q2 += m.quarters.Q2;
-        totals.Q3 += m.quarters.Q3;
-        totals.Q4 += m.quarters.Q4;
-        satisfactionTotals.Q1.satisfied += m.satisfaction.Q1.satisfied;
-        satisfactionTotals.Q1.unsatisfied += m.satisfaction.Q1.unsatisfied;
-        satisfactionTotals.Q2.satisfied += m.satisfaction.Q2.satisfied;
-        satisfactionTotals.Q2.unsatisfied += m.satisfaction.Q2.unsatisfied;
-        satisfactionTotals.Q3.satisfied += m.satisfaction.Q3.satisfied;
-        satisfactionTotals.Q3.unsatisfied += m.satisfaction.Q3.unsatisfied;
-        satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied;
-        satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
+        totals.Q1 += m.quarters.Q1; totals.Q2 += m.quarters.Q2; totals.Q3 += m.quarters.Q3; totals.Q4 += m.quarters.Q4;
+        satisfactionTotals.Q1.satisfied += m.satisfaction.Q1.satisfied; satisfactionTotals.Q1.unsatisfied += m.satisfaction.Q1.unsatisfied;
+        satisfactionTotals.Q2.satisfied += m.satisfaction.Q2.satisfied; satisfactionTotals.Q2.unsatisfied += m.satisfaction.Q2.unsatisfied;
+        satisfactionTotals.Q3.satisfied += m.satisfaction.Q3.satisfied; satisfactionTotals.Q3.unsatisfied += m.satisfaction.Q3.unsatisfied;
+        satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied; satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
     });
 
-    const quarters = [
-        { key: 'Q1', name: 'الربع الأول', color: '#e74c3c' },
-        { key: 'Q2', name: 'الربع الثاني', color: '#f39c12' },
-        { key: 'Q3', name: 'الربع الثالث', color: '#27ae60' },
-        { key: 'Q4', name: 'الربع الرابع', color: '#3498db' }
-    ];
-    
+    const quarters = [{ key: 'Q1', name: 'الربع الأول', color: '#e74c3c' }, { key: 'Q2', name: 'الربع الثاني', color: '#f39c12' }, { key: 'Q3', name: 'الربع الثالث', color: '#27ae60' }, { key: 'Q4', name: 'الربع الرابع', color: '#3498db' }];
     const maxTotal = Math.max(...Object.values(totals), 1);
     const months = ['يناير-مارس', 'إبريل-يونيو', 'يوليو-سبتمبر', 'أكتوبر-ديسمبر'];
-    
-    const avgReports = {
-        Q1: Math.round(totals.Q1 / (rawData.length || 1)),
-        Q2: Math.round(totals.Q2 / (rawData.length || 1)),
-        Q3: Math.round(totals.Q3 / (rawData.length || 1)),
-        Q4: Math.round(totals.Q4 / (rawData.length || 1))
-    };
 
-    const participationPercentages = {
-        Q1: totals.Q1 > 0 ? Math.round(((satisfactionTotals.Q1.satisfied + satisfactionTotals.Q1.unsatisfied) / totals.Q1) * 100) : 0,
-        Q2: totals.Q2 > 0 ? Math.round(((satisfactionTotals.Q2.satisfied + satisfactionTotals.Q2.unsatisfied) / totals.Q2) * 100) : 0,
-        Q3: totals.Q3 > 0 ? Math.round(((satisfactionTotals.Q3.satisfied + satisfactionTotals.Q3.unsatisfied) / totals.Q3) * 100) : 0,
-        Q4: totals.Q4 > 0 ? Math.round(((satisfactionTotals.Q4.satisfied + satisfactionTotals.Q4.unsatisfied) / totals.Q4) * 100) : 0
-    };
+    const avgReports = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+    const muniCount = rawData.length || 1;
+    avgReports.Q1 = Math.round(totals.Q1 / muniCount);
+    avgReports.Q2 = Math.round(totals.Q2 / muniCount);
+    avgReports.Q3 = Math.round(totals.Q3 / muniCount);
+    avgReports.Q4 = Math.round(totals.Q4 / muniCount);
 
     container.innerHTML = quarters.map((q, i) => {
         const total = totals[q.key];
-        const prevTotal = i > 0 ? totals[quarters[i - 1].key] : total;
-        const trend = total > prevTotal ? 'up' : total < prevTotal ? 'down' : 'same';
         const sat = satisfactionTotals[q.key];
         const totalSat = sat.satisfied + sat.unsatisfied;
         
-        let satisfiedPercent = manualSatisfactionValues[q.key].satisfied !== null 
-            ? manualSatisfactionValues[q.key].satisfied 
-            : (totalSat > 0 ? Math.round((sat.satisfied / totalSat) * 100) : 0);
+        // Calculate percentages
+        let satisfiedPercent, unsatisfiedPercent, participationPercent;
         
-        let unsatisfiedPercent = manualSatisfactionValues[q.key].unsatisfied !== null 
-            ? manualSatisfactionValues[q.key].unsatisfied 
-            : (totalSat > 0 ? Math.round((sat.unsatisfied / totalSat) * 100) : 0);
+        if (manualSatisfactionValues[q.key].satisfied !== null) {
+            satisfiedPercent = manualSatisfactionValues[q.key].satisfied;
+        } else {
+            satisfiedPercent = totalSat > 0 ? Math.round((sat.satisfied / totalSat) * 100) : 0;
+        }
         
-        let participationPercent = manualSatisfactionValues[q.key].participation !== null 
-            ? manualSatisfactionValues[q.key].participation 
-            : participationPercentages[q.key];
+        if (manualSatisfactionValues[q.key].unsatisfied !== null) {
+            unsatisfiedPercent = manualSatisfactionValues[q.key].unsatisfied;
+        } else {
+            unsatisfiedPercent = totalSat > 0 ? Math.round((sat.unsatisfied / totalSat) * 100) : 0;
+        }
+        
+        // Participation = satisfied + unsatisfied (auto-calculated)
+        participationPercent = manualSatisfactionValues[q.key].participation !== null ? 
+            manualSatisfactionValues[q.key].participation : 
+            Math.min(satisfiedPercent + unsatisfiedPercent, 100);
         
         const avgValue = avgReports[q.key];
 
         return `<div class="quarter-card ${q.key.toLowerCase()}">
-            <button class="close-btn" onclick="hideUnsatisfiedBox('${q.key}')">×</button>
             <div class="quarter-title">${q.name}</div>
             <div class="quarter-months">${months[i]}</div>
             <div class="quarter-value" style="color:${q.color};">${total.toLocaleString()}</div>
             <div style="margin:10px 0;background:#eee;height:8px;border-radius:4px;overflow:hidden;">
                 <div style="width:${(total / maxTotal * 100)}%;height:100%;background:${q.color};"></div>
             </div>
-            <span class="quarter-trend">${trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'} ${trend === 'up' ? 'ارتفاع' : trend === 'down' ? 'انخفاض' : 'ثبات'}</span>
             <div class="satisfaction-boxes">
+                <div class="satisfaction-box participation">
+                    <div class="label">نسبة المشاركين</div>
+                    <div class="percentage">
+                        <input type="number" class="percentage-input" id="sat-${q.key}-participation" value="${participationPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'participation')">%
+                    </div>
+                </div>
                 <div class="satisfaction-box satisfied">
                     <div class="label">نسبة الرضا</div>
                     <div class="percentage">
@@ -1142,17 +1006,11 @@ function drawChart() {
                     </div>
                 </div>
                 <div class="satisfaction-box unsatisfied" id="unsat-box-${q.key}">
+                    <button class="close-btn" onclick="hideUnsatisfiedBox('${q.key}')">×</button>
                     <div class="label">نسبة عدم الرضا</div>
                     <div class="percentage">
                         <input type="number" class="percentage-input" id="sat-${q.key}-unsatisfied" value="${unsatisfiedPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'unsatisfied')">%
                     </div>
-                </div>
-                <div class="satisfaction-box participation">
-                    <div class="label">نسبة المشاركين</div>
-                    <div class="percentage">
-                        <input type="number" class="percentage-input" id="sat-${q.key}-participation" value="${participationPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'participation')">%
-                    </div>
-                    <div class="count">من ${total.toLocaleString()} بلاغ</div>
                 </div>
                 <div class="satisfaction-box average">
                     <div class="label">متوسط البلاغات</div>
@@ -1161,53 +1019,17 @@ function drawChart() {
             </div>
         </div>`;
     }).join('');
-
-    updateSummarySection(satisfactionTotals, totals);
-    document.getElementById('summarySection').style.display = 'grid';
-}
-
-function hideUnsatisfiedBox(quarter) {
-    const box = document.getElementById(`unsat-box-${quarter}`);
-    if (box) box.style.display = 'none';
-}
-
-function updateSummarySection(satisfactionTotals, totals) {
-    let totalSatisfied = 0, totalUnsatisfied = 0, totalReports = 0;
-    
-    ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
-        totalSatisfied += satisfactionTotals[q].satisfied;
-        totalUnsatisfied += satisfactionTotals[q].unsatisfied;
-        totalReports += totals[q];
-    });
-    
-    const totalParticipants = totalSatisfied + totalUnsatisfied;
-    
-    let participationPercent = manualSummaryValues.participation !== null 
-        ? manualSummaryValues.participation 
-        : (totalReports > 0 ? Math.round((totalParticipants / totalReports) * 100) : 0);
-    
-    let satisfiedPercent = manualSummaryValues.satisfied !== null 
-        ? manualSummaryValues.satisfied 
-        : (totalParticipants > 0 ? Math.round((totalSatisfied / totalParticipants) * 100) : 0);
-    
-    let unsatisfiedPercent = manualSummaryValues.unsatisfied !== null 
-        ? manualSummaryValues.unsatisfied 
-        : (totalParticipants > 0 ? Math.round((totalUnsatisfied / totalParticipants) * 100) : 0);
-    
-    document.getElementById('summary-participation').value = participationPercent;
-    document.getElementById('summary-satisfied').value = satisfiedPercent;
-    document.getElementById('summary-unsatisfied').value = unsatisfiedPercent;
 }
 
 function showQuarterComparison() {
     const section = document.getElementById("compareSection");
     const summarySection = document.getElementById("summarySection");
-    
     if (!isCompareVisible) {
         section.style.display = "block";
         summarySection.style.display = "grid";
         isCompareVisible = true;
         updateQuarterComparison();
+        updateSummarySection();
         section.scrollIntoView({ behavior: 'smooth' });
     } else {
         section.style.display = "none";
@@ -1217,40 +1039,20 @@ function showQuarterComparison() {
 }
 
 let exportRows = [];
-
 function buildExport() {
     const quarter = document.getElementById("quarterFilter").value;
     exportRows = [["البلدية", "إجمالي البلاغات", "Q1", "Q2", "Q3", "Q4", "عدد الأحياء", "أعلى 4 أحياء"]];
-    
     visibleMunicipalities.forEach(m => {
         let sortedDistricts = [...m.districts];
-        if (quarter !== "all") {
-            sortedDistricts.sort((a, b) => b.quarters[quarter] - a.quarters[quarter]);
-        }
+        if (quarter !== "all") sortedDistricts.sort((a, b) => b.quarters[quarter] - a.quarters[quarter]);
         const top4 = sortedDistricts.slice(0, 4);
-        const top4Names = top4.map((d, i) => {
-            const count = quarter === "all" ? d.totalCount : d.quarters[quarter];
-            return `${i+1}. ${d.name} (${count})`;
-        }).join(" | ");
-        
-        exportRows.push([
-            m.name, 
-            m.totalCount, 
-            m.quarters.Q1, 
-            m.quarters.Q2, 
-            m.quarters.Q3, 
-            m.quarters.Q4, 
-            m.districts.length, 
-            top4Names
-        ]);
+        const top4Names = top4.map((d, i) => { const count = quarter === "all" ? d.totalCount : d.quarters[quarter]; return `${i+1}. ${d.name} (${count})`; }).join(" | ");
+        exportRows.push([m.name, m.totalCount, m.quarters.Q1, m.quarters.Q2, m.quarters.Q3, m.quarters.Q4, m.districts.length, top4Names]);
     });
 }
 
 function exportExcel() {
-    if (exportRows.length <= 1) {
-        alert('لا توجد بيانات');
-        return;
-    }
+    if (exportRows.length <= 1) { alert('لا توجد بيانات'); return; }
     let ws = XLSX.utils.aoa_to_sheet(exportRows);
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "البلديات");
@@ -1263,10 +1065,10 @@ function fitAll() {
     if (allPoints.length > 0) map.fitBounds(allPoints, { padding: [100, 100] });
 }
 
-function clearAllData() {
+function clearAllData() { 
     if (confirm('هل أنت متأكد؟')) {
         labelPositions = {};
-        location.reload();
+        location.reload(); 
     }
 }
 
@@ -1275,17 +1077,10 @@ function showNotification(message) {
     notif.style.cssText = 'position:fixed; top:90px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:white; padding:15px 30px; border-radius:30px; font-weight:600; z-index:100001;';
     notif.textContent = message;
     document.body.appendChild(notif);
-    setTimeout(() => {
-        notif.style.opacity = '0';
-        setTimeout(() => notif.remove(), 300);
-    }, 3000);
+    setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
-});
+document.addEventListener('DOMContentLoaded', function() { initMap(); });
 </script>
 </body>
 </html>
-
-

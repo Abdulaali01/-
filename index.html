@@ -820,8 +820,8 @@ function drawChart() {
         data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: 8, borderSkipped: false, barThickness: 30 }] },
         options: {
             responsive: true, maintainAspectRatio: false, animation: false, indexAxis: 'y',
-            plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', color: '#333', font: { weight: 'bold', size: 12 }, formatter: (value) => value.toLocaleString(), offset: 5 } },
-            scales: { x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(value) { return value.toLocaleString(); } } }, y: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, autoSkip: false } } }
+            plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', color: '#333', font: { weight: 'bold', size: 14 }, formatter: (value) => value.toLocaleString(), offset: 5 } },
+            scales: { x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(value) { return value.toLocaleString(); } } }, y: { grid: { display: false }, ticks: { font: { size: 16, weight: 'bold' }, autoSkip: false } } }
         }
     });
 }
@@ -970,70 +970,72 @@ async function exportSlide() {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     try {
-        // Use leaflet-image plugin to capture the map as an image
-        const mapElement = document.getElementById('map');
         const mapContainer = document.getElementById('mapSection');
         const chartContainer = document.getElementById('statsSection');
         const compareContainer = document.getElementById('compareSection');
 
-        // Create a canvas to combine everything
+        // Create a canvas with 16:9 ratio but optimized for mobile view
         const finalCanvas = document.createElement('canvas');
         const ctx = finalCanvas.getContext('2d');
 
-        // Set dimensions (1920x1080 for slide format)
+        // Set dimensions to 1920x1080 (Full HD 16:9)
         finalCanvas.width = 1920;
         finalCanvas.height = 1080;
 
-        // Fill background
+        // Fill background with gradient
         const gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
         gradient.addColorStop(0, '#1e3c72');
         gradient.addColorStop(1, '#2a5298');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 1920, 1080);
 
-        // Capture map using html2canvas with special options
+        // Add title with bold font size 20
+        ctx.font = 'bold 20px "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText('تحليل البلديات - نظام ربع سنوي', 960, 30);
+
+        // Capture map (left side - 55% width)
         const mapCanvas = await html2canvas(mapContainer, {
-            scale: 2,
+            scale: 1.5,
             useCORS: true,
             allowTaint: true,
             backgroundColor: null,
             logging: false,
-            onclone: function(clonedDoc) {
-                // Ensure map is visible in clone
-                const clonedMap = clonedDoc.getElementById('map');
-                if (clonedMap) {
-                    clonedMap.style.width = '100%';
-                    clonedMap.style.height = '100%';
-                }
-            }
+            width: 1050,
+            height: 550
         });
 
-        // Draw map on left side (60% width)
-        ctx.drawImage(mapCanvas, 20, 20, 1140, 600);
+        // Draw map
+        ctx.drawImage(mapCanvas, 20, 50, 1050, 550);
 
-        // Capture chart
+        // Capture chart (right side - 40% width)
         const chartCanvas = await html2canvas(chartContainer, {
-            scale: 2,
+            scale: 1.5,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            width: 800,
+            height: 550
         });
 
-        // Draw chart on right side (40% width)
-        ctx.drawImage(chartCanvas, 1180, 20, 720, 600);
+        // Draw chart
+        ctx.drawImage(chartCanvas, 1090, 50, 810, 550);
 
-        // Capture comparison section
+        // Capture comparison section (bottom - full width)
         const compareCanvas = await html2canvas(compareContainer, {
-            scale: 2,
+            scale: 1.5,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            width: 1880,
+            height: 400
         });
 
         // Draw comparison at bottom
-        ctx.drawImage(compareCanvas, 20, 640, 1880, 420);
+        ctx.drawImage(compareCanvas, 20, 620, 1880, 400);
 
         document.body.classList.remove('exporting');
 

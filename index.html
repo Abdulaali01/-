@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
 <style>
@@ -74,7 +74,7 @@ body {
 }
 #map { height: 100%; width: 100%; z-index: 1; }
 
-/* Map Summary Overlay - positioned BOTTOM RIGHT now */
+/* Map Summary Overlay - positioned BOTTOM RIGHT */
 .map-summary-overlay {
     position: absolute;
     bottom: 20px;
@@ -163,77 +163,14 @@ body {
 }
 .hidden { display: none !important; }
 
-/* Map Table Overlay - HIDDEN by default now */
+/* Map Table Overlay - HIDDEN */
 .map-table-overlay {
     display: none !important;
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(255,255,255,0.95);
-    border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    z-index: 1000;
-    min-width: 180px;
-    border: 2px solid #1e3c72;
-    max-height: 200px;
-    overflow-y: auto;
-}
-.map-table-overlay h4 {
-    margin: 0 0 8px 0;
-    font-size: 13px;
-    color: #1e3c72;
-    text-align: center;
-    border-bottom: 2px solid #1e3c72;
-    padding-bottom: 5px;
-}
-.map-table-overlay table {
-    width: 100%;
-    font-size: 11px;
-    border-collapse: collapse;
-}
-.map-table-overlay th {
-    background: #1e3c72;
-    color: white;
-    padding: 6px;
-    text-align: center;
-    font-size: 10px;
-}
-.map-table-overlay td {
-    padding: 5px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
 }
 
 /* Municipality labels - HIDDEN */
 .municipality-label {
     display: none !important;
-    background: rgba(255,255,255,0.95);
-    border: 2px solid #1e3c72;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    min-width: 140px;
-    direction: rtl;
-    cursor: move !important;
-    user-select: none;
-    position: absolute;
-    z-index: 10000;
-}
-.municipality-label .muni-name {
-    color: #1e3c72;
-    font-size: 14px;
-    margin-bottom: 3px;
-    border-bottom: 2px solid #1e3c72;
-    padding-bottom: 3px;
-}
-.municipality-label .muni-count {
-    font-size: 16px;
-    color: #e74c3c;
-    font-weight: bold;
 }
 
 .custom-zoom { 
@@ -389,52 +326,31 @@ body {
     .map-summary-overlay { display: none !important; }
 }
 
-/* Slide Export Mode - 16:9 HD */
-.slide-export-mode {
+/* Export Mode Styles */
+.exporting {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 1920px !important;
-    height: 1080px !important;
-    margin: 0 !important;
-    padding: 20px !important;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    width: 100vw !important;
+    height: 100vh !important;
     z-index: 99999 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    padding: 20px !important;
+    overflow: auto !important;
 }
 
-.slide-export-mode .main-container {
-    margin-top: 0 !important;
-    height: 540px !important;
-    min-height: 540px !important;
-}
-
-.slide-export-mode .map-wrapper {
-    height: 520px !important;
-    min-height: 520px !important;
-}
-
-.slide-export-mode #compareSection {
-    height: 480px !important;
-    margin-top: 10px !important;
-}
-
-.slide-export-mode .compare-section {
-    height: 400px !important;
-}
-
-.slide-export-mode .quarter-card {
-    padding: 15px !important;
-}
-
-.slide-export-mode .quarter-value {
-    font-size: 36px !important;
-}
-
-.slide-export-mode .top-bar {
+.exporting .top-bar {
     display: none !important;
+}
+
+.exporting .main-container {
+    margin-top: 0 !important;
+    height: 60vh !important;
+}
+
+.exporting #compareSection {
+    margin-top: 20px !important;
+    height: 35vh !important;
 }
 </style>
 </head>
@@ -500,12 +416,6 @@ body {
             </div>
         </div>
 
-        <!-- Map Table Overlay - HIDDEN -->
-        <div class="map-table-overlay" id="mapTableOverlay">
-            <h4>📅 توزيع البلاغات</h4>
-            <table><thead><tr><th>الشهر</th><th>البلاغات</th></tr></thead><tbody id="mapTableBody"></tbody></table>
-        </div>
-
         <div class="custom-zoom">
             <button class="zoom-btn" onclick="map.zoomIn()">+</button>
             <button class="zoom-btn" onclick="map.zoomOut()">−</button>
@@ -520,8 +430,6 @@ body {
         <div class="compare-section" id="quarterComparison"></div>
     </div>
 </div>
-
-<div id="slideExportContainer" style="display: none;"></div>
 
 <script>
 Chart.register(ChartDataLabels);
@@ -634,17 +542,14 @@ function updateSatisfactionCount(quarter, type) {
     input.value = value;
     manualSatisfactionValues[quarter][type] = value;
     
-    // Recalculate participation based on satisfied + unsatisfied
     if (type === 'satisfied' || type === 'unsatisfied') {
         calculateParticipation(quarter);
     }
     
-    // Update summary
     updateMapSummary();
 }
 
 function calculateParticipation(quarter) {
-    // Get totals for this quarter
     const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
     const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
     
@@ -659,7 +564,6 @@ function calculateParticipation(quarter) {
     const totalReports = totals[quarter];
     const sat = satisfactionTotals[quarter];
     
-    // Use manual values if set, otherwise use calculated
     let satisfied = manualSatisfactionValues[quarter].satisfied !== null ? 
         manualSatisfactionValues[quarter].satisfied : 
         (totalReports > 0 ? Math.round((sat.satisfied / totalReports) * 100) : 0);
@@ -668,14 +572,12 @@ function calculateParticipation(quarter) {
         manualSatisfactionValues[quarter].unsatisfied : 
         (totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0);
     
-    // Participation = (satisfied + unsatisfied) / total reports * 100
     let participation = 0;
     if (totalReports > 0) {
         const totalSat = sat.satisfied + sat.unsatisfied;
         participation = Math.round((totalSat / totalReports) * 100);
     }
     
-    // Update participation input
     const partInput = document.getElementById(`sat-${quarter}-participation`);
     if (partInput && manualSatisfactionValues[quarter].participation === null) {
         partInput.value = participation;
@@ -706,18 +608,15 @@ function resetSatisfactionValues() {
     showNotification('✅ تم إعادة ضبط النسب للقيم المحسوبة');
 }
 
-// Hide unsatisfied box in map overlay
 function hideUnsatisfiedBoxMap() {
     document.getElementById('unsatisfiedBox').classList.add('hidden');
 }
 
-// Hide unsatisfied box for specific quarter
 function hideUnsatisfiedBox(quarter) {
     const box = document.getElementById(`unsat-box-${quarter}`);
     if (box) box.classList.add('hidden');
 }
 
-// Update summary values
 function updateSummaryValue(type) {
     const input = document.getElementById(`summary-${type}`);
     let value = parseInt(input.value) || 0;
@@ -727,7 +626,6 @@ function updateSummaryValue(type) {
     summaryValues[type] = value;
 }
 
-// Update map summary overlay
 function updateMapSummary() {
     const overlay = document.getElementById('mapSummaryOverlay');
     if (rawData.length === 0) {
@@ -736,7 +634,6 @@ function updateMapSummary() {
     }
     overlay.style.display = 'block';
     
-    // Calculate totals for all quarters
     const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
     const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
     
@@ -748,7 +645,6 @@ function updateMapSummary() {
         satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied; satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
     });
     
-    // Calculate participation for each quarter
     const participations = [];
     ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
         const totalReports = totals[q];
@@ -759,13 +655,11 @@ function updateMapSummary() {
         }
     });
     
-    // Average participation
     let avgParticipation = 0;
     if (participations.length > 0) {
         avgParticipation = Math.round(participations.reduce((a, b) => a + b, 0) / participations.length);
     }
     
-    // Calculate satisfied and unsatisfied percentages
     let totalReportsAll = totals.Q1 + totals.Q2 + totals.Q3 + totals.Q4;
     let totalSatisfied = satisfactionTotals.Q1.satisfied + satisfactionTotals.Q2.satisfied + satisfactionTotals.Q3.satisfied + satisfactionTotals.Q4.satisfied;
     let totalUnsatisfied = satisfactionTotals.Q1.unsatisfied + satisfactionTotals.Q2.unsatisfied + satisfactionTotals.Q3.unsatisfied + satisfactionTotals.Q4.unsatisfied;
@@ -773,7 +667,6 @@ function updateMapSummary() {
     let avgSatisfied = totalReportsAll > 0 ? Math.round((totalSatisfied / totalReportsAll) * 100) : 0;
     let avgUnsatisfied = totalReportsAll > 0 ? Math.round((totalUnsatisfied / totalReportsAll) * 100) : 0;
     
-    // Update inputs if not manually set
     if (summaryValues.participation === null) {
         document.getElementById('summary-participation').value = avgParticipation;
     }
@@ -892,17 +785,6 @@ function fillSelect(id, set) {
     [...set].sort().forEach(v => { el.innerHTML += `<option value="${v}">${v}</option>`; });
 }
 
-// Municipality labels - NOW HIDDEN (function kept for compatibility but does nothing)
-function createDraggableLabel(muni, count, container) {
-    // Labels are now hidden - do not create them
-    return null;
-}
-
-function updateMapTable() {
-    // Table is hidden - do nothing
-    return;
-}
-
 function applyCurrentFilter() {
     const quarter = document.getElementById("quarterFilter").value;
     const muni = document.getElementById("municipalityFilter").value;
@@ -920,7 +802,6 @@ function applyCurrentFilter() {
     drawMap();
     drawChart();
     buildExport();
-    updateMapTable();
     updateMapSummary();
     updateQuarterComparison();
 }
@@ -1024,7 +905,6 @@ function updateQuarterComparison() {
         const totalReports = totals[q.key];
         const totalSat = sat.satisfied + sat.unsatisfied;
         
-        // Calculate percentages based on total reports for the quarter
         let satisfiedPercent, unsatisfiedPercent, participationPercent;
         
         if (manualSatisfactionValues[q.key].satisfied !== null) {
@@ -1039,7 +919,6 @@ function updateQuarterComparison() {
             unsatisfiedPercent = totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0;
         }
         
-        // Participation = (satisfied + unsatisfied) / total reports * 100
         participationPercent = manualSatisfactionValues[q.key].participation !== null ? 
             manualSatisfactionValues[q.key].participation : 
             (totalReports > 0 ? Math.round((totalSat / totalReports) * 100) : 0);
@@ -1137,11 +1016,11 @@ function showNotification(message) {
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-// Export Slide Function - HD 16:9
-function exportSlide() {
+// Export Slide Function - Fixed using dom-to-image
+async function exportSlide() {
+    const body = document.body;
     const captureArea = document.getElementById('captureArea');
     const compareSection = document.getElementById('compareSection');
-    const body = document.body;
     
     if (!captureArea || !compareSection) {
         alert('لا يوجد محتوى للتصدير');
@@ -1151,76 +1030,59 @@ function exportSlide() {
     // Show loading notification
     showNotification('⏳ جاري تصدير السلايد...');
     
-    // Add slide export mode class for 16:9 layout
-    body.classList.add('slide-export-mode');
+    // Add export mode class
+    body.classList.add('exporting');
     
-    // Ensure compare section is visible
-    compareSection.style.display = 'block';
+    // Wait for map tiles to fully load
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Wait for layout to settle
-    setTimeout(() => {
-        // Create a wrapper for full capture
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:fixed; top:0; left:0; width:1920px; height:1080px; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); z-index:99999; padding:20px; display:flex; flex-direction:column;';
-        
-        // Clone the elements
-        const mainClone = captureArea.cloneNode(true);
-        const compareClone = compareSection.cloneNode(true);
-        
-        // Adjust styles for slide
-        mainClone.style.marginTop = '0';
-        mainClone.style.height = '520px';
-        mainClone.style.minHeight = '520px';
-        
-        compareClone.style.marginTop = '10px';
-        compareClone.style.height = '480px';
-        compareClone.style.padding = '0';
-        
-        wrapper.appendChild(mainClone);
-        wrapper.appendChild(compareClone);
-        document.body.appendChild(wrapper);
-        
-        // Use html2canvas to capture
-        html2canvas(wrapper, {
-            scale: 2, // HD quality
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: null,
-            logging: false,
-            width: 1920,
-            height: 1080
-        }).then(canvas => {
-            // Remove wrapper
-            document.body.removeChild(wrapper);
-            body.classList.remove('slide-export-mode');
-            
-            // Convert to blob and save
-            canvas.toBlob(function(blob) {
-                if (blob) {
-                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                    saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
-                    showNotification('✅ تم تصدير السلايد بنجاح (1920x1080 HD)');
-                } else {
-                    // Fallback: use data URL
-                    const dataUrl = canvas.toDataURL('image/png');
-                    const link = document.createElement('a');
-                    link.download = `سلايد_تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
-                    link.href = dataUrl;
-                    link.click();
-                    showNotification('✅ تم تصدير السلايد بنجاح (1920x1080 HD)');
+    // Force map to render
+    if (map) {
+        map.invalidateSize();
+    }
+    
+    // Wait again for render
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+        // Capture the entire dashboard
+        const blob = await domtoimage.toBlob(body, {
+            quality: 1,
+            bgcolor: '#1e3c72',
+            style: {
+                'transform': 'scale(1)',
+                'transform-origin': 'top left'
+            },
+            filter: function(node) {
+                // Hide zoom controls and other UI elements during capture
+                if (node.classList && (
+                    node.classList.contains('custom-zoom') ||
+                    node.classList.contains('leaflet-control-container')
+                )) {
+                    return false;
                 }
-            }, 'image/png');
-        }).catch(error => {
-            console.error('Export error:', error);
-            body.classList.remove('slide-export-mode');
-            alert('حدث خطأ أثناء التصدير: ' + error.message);
+                return true;
+            }
         });
-    }, 500);
+        
+        // Remove export mode
+        body.classList.remove('exporting');
+        
+        // Save the image
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
+        
+        showNotification('✅ تم تصدير السلايد بنجاح');
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        body.classList.remove('exporting');
+        alert('حدث خطأ أثناء التصدير: ' + error.message);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() { 
     initMap(); 
-    // Show quarter comparison by default
     updateQuarterComparison();
 });
 </script>

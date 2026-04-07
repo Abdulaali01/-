@@ -51,7 +51,6 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; 
 }
 
-/* Main Layout - Horizontal */
 .main-container { 
     margin-top: 70px; 
     padding: 15px; 
@@ -62,7 +61,6 @@ body {
     min-height: 500px;
 }
 
-/* Stats Section (Chart) - Left side */
 .stats-section { 
     display: flex;
     flex-direction: column;
@@ -102,7 +100,6 @@ body {
     border-radius: 10px; background: #f8f9fa; padding: 10px; 
 }
 
-/* Map Section - Right side */
 .map-wrapper { 
     background: white; 
     border-radius: 20px; 
@@ -116,7 +113,17 @@ body {
 }
 #map { height: 100%; width: 100%; z-index: 1; }
 
-/* Map Summary Overlay - positioned BOTTOM RIGHT */
+.empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #666;
+    font-size: 18px;
+    z-index: 100;
+}
+
 .map-summary-overlay {
     position: absolute;
     bottom: 20px;
@@ -149,24 +156,15 @@ body {
     border: 2px solid;
     position: relative;
 }
-.summary-box-map:last-child {
-    margin-bottom: 0;
-}
+.summary-box-map:last-child { margin-bottom: 0; }
 .summary-box-map.participation { border-color: #17a2b8; background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); }
 .summary-box-map.satisfied { border-color: #28a745; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); }
 .summary-box-map.unsatisfied { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); }
-.summary-box-map .summary-title {
-    font-size: 12px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
+.summary-box-map .summary-title { font-size: 12px; font-weight: bold; margin-bottom: 5px; }
 .summary-box-map.participation .summary-title { color: #0c5460; }
 .summary-box-map.satisfied .summary-title { color: #155724; }
 .summary-box-map.unsatisfied .summary-title { color: #721c24; }
-.summary-box-map .summary-value {
-    font-size: 24px;
-    font-weight: bold;
-}
+.summary-box-map .summary-value { font-size: 24px; font-weight: bold; }
 .summary-box-map.participation .summary-value { color: #17a2b8; }
 .summary-box-map.satisfied .summary-value { color: #28a745; }
 .summary-box-map.unsatisfied .summary-value { color: #dc3545; }
@@ -182,11 +180,7 @@ body {
     border-radius: 6px;
     font-family: inherit;
 }
-.summary-box-map input.summary-input:focus {
-    outline: none;
-    background: white;
-    border-color: #1e3c72;
-}
+.summary-box-map input.summary-input:focus { outline: none; background: white; border-color: #1e3c72; }
 .summary-close-btn-map {
     position: absolute;
     top: 5px;
@@ -204,16 +198,6 @@ body {
     justify-content: center;
 }
 .hidden { display: none !important; }
-
-/* Map Table Overlay - HIDDEN */
-.map-table-overlay {
-    display: none !important;
-}
-
-/* Municipality labels - HIDDEN */
-.municipality-label {
-    display: none !important;
-}
 
 .custom-zoom { 
     position: absolute; 
@@ -234,7 +218,6 @@ body {
     color: #1e3c72; font-weight: bold; 
 }
 
-/* Compare Section - Bottom */
 #compareSection {
     display: block !important;
     margin-top: 20px;
@@ -306,11 +289,7 @@ body {
     border-radius: 4px;
     font-family: inherit;
 }
-.satisfaction-box input.percentage-input:focus {
-    outline: none;
-    background: white;
-    border-color: #1e3c72;
-}
+.satisfaction-box input.percentage-input:focus { outline: none; background: white; border-color: #1e3c72; }
 
 @media (max-width: 1400px) { 
     .main-container { flex-direction: column; height: auto; }
@@ -329,36 +308,9 @@ body {
     .map-summary-overlay { display: none !important; }
 }
 
-/* Export Mode Styles - Hide X buttons only in export */
-.exporting .close-btn,
-.exporting .summary-close-btn-map {
-    display: none !important;
-}
-
-.exporting .custom-zoom {
-    display: none !important;
-}
-
-.exporting .top-bar {
-    display: none !important;
-}
-
-/* Loading overlay */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999999;
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-}
+.exporting .close-btn, .exporting .summary-close-btn-map { display: none !important; }
+.exporting .custom-zoom { display: none !important; }
+.exporting .top-bar { display: none !important; }
 </style>
 </head>
 
@@ -391,12 +343,13 @@ body {
 </div>
 
 <div class="main-container" id="captureArea">
-    <!-- Map on Right (Order 1 in RTL) -->
     <div class="map-wrapper" id="mapSection">
         <div id="map"></div>
-        <div id="labelsContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></div>
-        
-        <!-- Map Summary Overlay - positioned BOTTOM RIGHT -->
+        <div id="emptyStateMap" class="empty-state" style="display: none;">
+            <div style="font-size: 48px; margin-bottom: 10px;">📂</div>
+            <div>الرجاء رفع ملف Excel لعرض الخريطة</div>
+        </div>
+
         <div class="map-summary-overlay" id="mapSummaryOverlay">
             <h4>📊 إجمالي النسب</h4>
             <div class="summary-box-map participation" id="participationBox">
@@ -420,12 +373,15 @@ body {
         </div>
     </div>
 
-    <!-- Stats/Chart on Left (Order 2 in RTL) -->
     <div class="stats-section" id="statsSection">
         <div class="card">
             <div class="card-title">📊 توزيع البلديات <span class="quarter-badge" id="currentQuarterBadge">الكل</span></div>
             <div class="chart-scroll-container">
-                <div class="chart-canvas-wrapper" id="chartWrapper">
+                <div id="emptyStateChart" class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📊</div>
+                    <div>الرجاء رفع ملف Excel لعرض الرسم البياني</div>
+                </div>
+                <div class="chart-canvas-wrapper" id="chartWrapper" style="display: none;">
                     <canvas id="chart"></canvas>
                 </div>
             </div>
@@ -433,11 +389,14 @@ body {
     </div>
 </div>
 
-<!-- Quarter Comparison - Bottom -->
 <div id="compareSection">
     <div class="card">
         <div class="card-title">📊 مقارنة الأداء الربع سنوي</div>
-        <div class="compare-section" id="quarterComparison"></div>
+        <div id="emptyStateCompare" class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
+            <div style="font-size: 48px; margin-bottom: 10px;">📈</div>
+            <div>الرجاء رفع ملف Excel لعرض مقارنة الأرباع</div>
+        </div>
+        <div class="compare-section" id="quarterComparison" style="display: none;"></div>
     </div>
 </div>
 
@@ -445,10 +404,6 @@ body {
 Chart.register(ChartDataLabels);
 
 let map = null, polygonLayer = null, rawData = [], visibleMunicipalities = [], chart = null, allMunicipalities = new Set(), isCompareVisible = true;
-let labelPositions = {};
-let isDragging = false;
-let draggedLabel = null;
-let dragOffset = { x: 0, y: 0 };
 
 const municipalityColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b', '#2980b9', '#8e44ad', '#27ae60', '#f1c40f', '#e91e63'];
 
@@ -461,14 +416,17 @@ const getQuarterFromDate = (dateStr) => {
     if (!dateStr || dateStr === 'غير معروف' || dateStr === '') return null;
     dateStr = String(dateStr).toLowerCase().trim();
     let month = null;
+
     for (let i = 0; i < monthNames.arabic.length; i++) {
         if (dateStr.includes(monthNames.arabic[i].toLowerCase())) { month = i + 1; break; }
     }
+
     if (!month) {
         for (let i = 0; i < monthNames.english.length; i++) {
             if (dateStr.includes(monthNames.english[i])) { month = i + 1; break; }
         }
     }
+
     if (!month && dateStr.includes('/')) {
         const parts = dateStr.split('/');
         if (parts.length >= 2) {
@@ -476,6 +434,7 @@ const getQuarterFromDate = (dateStr) => {
             month = (m1 > 12 && m2 <= 12) ? m2 : m1;
         }
     }
+
     if (!month && dateStr.includes('-')) {
         const parts = dateStr.split('-');
         if (parts.length >= 3) {
@@ -485,51 +444,19 @@ const getQuarterFromDate = (dateStr) => {
             month = parseInt(parts[0]);
         }
     }
+
     if (!month && dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)) {
         month = parseInt(dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)[1]);
     }
+
     if (!month || isNaN(month) || month < 1 || month > 12) return null;
+
     if (month <= 3) return 'Q1';
     if (month <= 6) return 'Q2';
     if (month <= 9) return 'Q3';
     return 'Q4';
 };
 
-const getMonthFromDate = (dateStr) => {
-    if (!dateStr || dateStr === 'غير معروف' || dateStr === '') return null;
-    dateStr = String(dateStr).toLowerCase().trim();
-    let month = null;
-    for (let i = 0; i < monthNames.arabic.length; i++) {
-        if (dateStr.includes(monthNames.arabic[i].toLowerCase())) { month = i + 1; break; }
-    }
-    if (!month) {
-        for (let i = 0; i < monthNames.english.length; i++) {
-            if (dateStr.includes(monthNames.english[i])) { month = i + 1; break; }
-        }
-    }
-    if (!month && dateStr.includes('/')) {
-        const parts = dateStr.split('/');
-        if (parts.length >= 2) {
-            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
-            month = (m1 > 12 && m2 <= 12) ? m2 : m1;
-        }
-    }
-    if (!month && dateStr.includes('-')) {
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-            let m1 = parseInt(parts[0]), m2 = parseInt(parts[1]);
-            month = (m1 > 31) ? m2 : (m2 > 12 ? m1 : m1);
-        } else if (parts.length === 2) {
-            month = parseInt(parts[0]);
-        }
-    }
-    if (!month && dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)) {
-        month = parseInt(dateStr.match(/(?:^|[^\d])([1-9]|1[0-2])(?:[^\d]|$)/)[1]);
-    }
-    return month;
-};
-
-// Manual satisfaction values with unsatisfied
 let manualSatisfactionValues = { 
     Q1: { satisfied: null, unsatisfied: null, participation: null }, 
     Q2: { satisfied: null, unsatisfied: null, participation: null }, 
@@ -537,32 +464,27 @@ let manualSatisfactionValues = {
     Q4: { satisfied: null, unsatisfied: null, participation: null } 
 };
 
-// Summary values
-let summaryValues = {
-    participation: null,
-    satisfied: null,
-    unsatisfied: null
-};
+let summaryValues = { participation: null, satisfied: null, unsatisfied: null };
 
 function updateSatisfactionCount(quarter, type) {
     const input = document.getElementById(`sat-${quarter}-${type}`);
+    if (!input) return;
     let value = parseInt(input.value) || 0;
     if (value < 0) value = 0;
     if (value > 100) value = 100;
     input.value = value;
     manualSatisfactionValues[quarter][type] = value;
-    
+
     if (type === 'satisfied' || type === 'unsatisfied') {
         calculateParticipation(quarter);
     }
-    
     updateMapSummary();
 }
 
 function calculateParticipation(quarter) {
     const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
     const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
-    
+
     rawData.forEach(m => {
         totals.Q1 += m.quarters.Q1; totals.Q2 += m.quarters.Q2; totals.Q3 += m.quarters.Q3; totals.Q4 += m.quarters.Q4;
         satisfactionTotals.Q1.satisfied += m.satisfaction.Q1.satisfied; satisfactionTotals.Q1.unsatisfied += m.satisfaction.Q1.unsatisfied;
@@ -570,34 +492,26 @@ function calculateParticipation(quarter) {
         satisfactionTotals.Q3.satisfied += m.satisfaction.Q3.satisfied; satisfactionTotals.Q3.unsatisfied += m.satisfaction.Q3.unsatisfied;
         satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied; satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
     });
-    
+
     const totalReports = totals[quarter];
     const sat = satisfactionTotals[quarter];
-    
-    let satisfied = manualSatisfactionValues[quarter].satisfied !== null ? 
-        manualSatisfactionValues[quarter].satisfied : 
-        (totalReports > 0 ? Math.round((sat.satisfied / totalReports) * 100) : 0);
-    
-    let unsatisfied = manualSatisfactionValues[quarter].unsatisfied !== null ? 
-        manualSatisfactionValues[quarter].unsatisfied : 
-        (totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0);
-    
+
     let participation = 0;
     if (totalReports > 0) {
         const totalSat = sat.satisfied + sat.unsatisfied;
         participation = Math.round((totalSat / totalReports) * 100);
     }
-    
+
     const partInput = document.getElementById(`sat-${quarter}-participation`);
     if (partInput && manualSatisfactionValues[quarter].participation === null) {
         partInput.value = participation;
     }
-    
     manualSatisfactionValues[quarter].participation = participation;
 }
 
 function validatePercentage(quarter) {
     const satInput = document.getElementById(`sat-${quarter}-satisfied`);
+    if (!satInput) return;
     let sat = parseInt(satInput.value) || 0;
     if (sat < 0) sat = 0;
     if (sat > 100) sat = 100;
@@ -606,29 +520,19 @@ function validatePercentage(quarter) {
 }
 
 function resetSatisfactionValues() {
-    manualSatisfactionValues = { 
-        Q1: { satisfied: null, unsatisfied: null, participation: null }, 
-        Q2: { satisfied: null, unsatisfied: null, participation: null }, 
-        Q3: { satisfied: null, unsatisfied: null, participation: null }, 
-        Q4: { satisfied: null, unsatisfied: null, participation: null } 
-    };
+    manualSatisfactionValues = { Q1: { satisfied: null, unsatisfied: null, participation: null }, Q2: { satisfied: null, unsatisfied: null, participation: null }, Q3: { satisfied: null, unsatisfied: null, participation: null }, Q4: { satisfied: null, unsatisfied: null, participation: null } };
     summaryValues = { participation: null, satisfied: null, unsatisfied: null };
     updateQuarterComparison();
     updateMapSummary();
     showNotification('✅ تم إعادة ضبط النسب للقيم المحسوبة');
 }
 
-function hideUnsatisfiedBoxMap() {
-    document.getElementById('unsatisfiedBox').classList.add('hidden');
-}
-
-function hideUnsatisfiedBox(quarter) {
-    const box = document.getElementById(`unsat-box-${quarter}`);
-    if (box) box.classList.add('hidden');
-}
+function hideUnsatisfiedBoxMap() { document.getElementById('unsatisfiedBox').classList.add('hidden'); }
+function hideUnsatisfiedBox(quarter) { const box = document.getElementById(`unsat-box-${quarter}`); if (box) box.classList.add('hidden'); }
 
 function updateSummaryValue(type) {
     const input = document.getElementById(`summary-${type}`);
+    if (!input) return;
     let value = parseInt(input.value) || 0;
     if (value < 0) value = 0;
     if (value > 100) value = 100;
@@ -638,15 +542,12 @@ function updateSummaryValue(type) {
 
 function updateMapSummary() {
     const overlay = document.getElementById('mapSummaryOverlay');
-    if (rawData.length === 0) {
-        overlay.style.display = 'none';
-        return;
-    }
+    if (rawData.length === 0) { overlay.style.display = 'none'; return; }
     overlay.style.display = 'block';
-    
+
     const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
     const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
-    
+
     rawData.forEach(m => {
         totals.Q1 += m.quarters.Q1; totals.Q2 += m.quarters.Q2; totals.Q3 += m.quarters.Q3; totals.Q4 += m.quarters.Q4;
         satisfactionTotals.Q1.satisfied += m.satisfaction.Q1.satisfied; satisfactionTotals.Q1.unsatisfied += m.satisfaction.Q1.unsatisfied;
@@ -654,107 +555,118 @@ function updateMapSummary() {
         satisfactionTotals.Q3.satisfied += m.satisfaction.Q3.satisfied; satisfactionTotals.Q3.unsatisfied += m.satisfaction.Q3.unsatisfied;
         satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied; satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
     });
-    
+
     const participations = [];
     ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
         const totalReports = totals[q];
         const sat = satisfactionTotals[q];
-        if (totalReports > 0) {
-            const totalSat = sat.satisfied + sat.unsatisfied;
-            participations.push(Math.round((totalSat / totalReports) * 100));
-        }
+        if (totalReports > 0) { participations.push(Math.round(((sat.satisfied + sat.unsatisfied) / totalReports) * 100)); }
     });
-    
-    let avgParticipation = 0;
-    if (participations.length > 0) {
-        avgParticipation = Math.round(participations.reduce((a, b) => a + b, 0) / participations.length);
-    }
-    
+
+    let avgParticipation = participations.length > 0 ? Math.round(participations.reduce((a, b) => a + b, 0) / participations.length) : 0;
     let totalReportsAll = totals.Q1 + totals.Q2 + totals.Q3 + totals.Q4;
-    let totalSatisfied = satisfactionTotals.Q1.satisfied + satisfactionTotals.Q2.satisfied + satisfactionTotals.Q3.satisfied + satisfactionTotals.Q4.satisfied;
-    let totalUnsatisfied = satisfactionTotals.Q1.unsatisfied + satisfactionTotals.Q2.unsatisfied + satisfactionTotals.Q3.unsatisfied + satisfactionTotals.Q4.unsatisfied;
-    
-    let avgSatisfied = totalReportsAll > 0 ? Math.round((totalSatisfied / totalReportsAll) * 100) : 0;
-    let avgUnsatisfied = totalReportsAll > 0 ? Math.round((totalUnsatisfied / totalReportsAll) * 100) : 0;
-    
-    if (summaryValues.participation === null) {
-        document.getElementById('summary-participation').value = avgParticipation;
-    }
-    if (summaryValues.satisfied === null) {
-        document.getElementById('summary-satisfied').value = avgSatisfied;
-    }
-    if (summaryValues.unsatisfied === null) {
-        document.getElementById('summary-unsatisfied').value = avgUnsatisfied;
-    }
+    let avgSatisfied = totalReportsAll > 0 ? Math.round(((satisfactionTotals.Q1.satisfied + satisfactionTotals.Q2.satisfied + satisfactionTotals.Q3.satisfied + satisfactionTotals.Q4.satisfied) / totalReportsAll) * 100) : 0;
+    let avgUnsatisfied = totalReportsAll > 0 ? Math.round(((satisfactionTotals.Q1.unsatisfied + satisfactionTotals.Q2.unsatisfied + satisfactionTotals.Q3.unsatisfied + satisfactionTotals.Q4.unsatisfied) / totalReportsAll) * 100) : 0;
+
+    if (summaryValues.participation === null) document.getElementById('summary-participation').value = avgParticipation;
+    if (summaryValues.satisfied === null) document.getElementById('summary-satisfied').value = avgSatisfied;
+    if (summaryValues.unsatisfied === null) document.getElementById('summary-unsatisfied').value = avgUnsatisfied;
 }
 
 function initMap() {
     const mapElement = document.getElementById('map');
     if (!mapElement) return;
+    if (map) { map.remove(); }
     map = L.map('map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([24.7136, 46.6753], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     polygonLayer = L.layerGroup().addTo(map);
 }
 
 function loadExcel() {
-    const file = document.getElementById("file").files[0];
-    if (!file) { alert('الرجاء اختيار ملف'); return; }
+    const fileInput = document.getElementById("file");
+    const file = fileInput.files[0];
+
+    if (!file) { alert('الرجاء اختيار ملف Excel أولاً'); return; }
+
+    showNotification('⏳ جاري تحميل الملف...');
+
     const reader = new FileReader();
     reader.onload = e => {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
-        processRows(rows);
+        try {
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+
+            if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('الملف لا يحتوي على أوراق عمل'); return; }
+
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+            if (rows.length < 2) { alert('الملف فارغ أو لا يحتوي على بيانات كافية'); return; }
+
+            processRows(rows);
+        } catch (error) {
+            console.error('Error loading Excel:', error);
+            alert('حدث خطأ أثناء قراءة الملف: ' + error.message);
+        }
     };
+    reader.onerror = () => { alert('حدث خطأ أثناء قراءة الملف'); };
     reader.readAsArrayBuffer(file);
 }
 
 function processRows(rows) {
+    console.log('Processing rows:', rows.length);
     rawData = [];
     allMunicipalities.clear();
     const districtMap = {};
-    let monthlyCounts = {};
 
     for (let i = 1; i < rows.length; i++) {
         let r = rows[i];
         if (!r || r.length < 3) continue;
-        let lng = parseFloat(r[0]), lat = parseFloat(r[1]);
+
+        let lng = parseFloat(r[0]); 
+        let lat = parseFloat(r[1]);
         let name = String(r[2] || "غير معروف").trim();
         let muni = String(r[3] || "غير محدد").trim();
         let date = r[4];
-        let satisfaction = String(r[6] || "").trim();
-        if (isNaN(lat) || isNaN(lng)) continue;
+        let satisfaction = String(r[5] || r[6] || "").trim();
+
+        if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) continue;
+
         if (typeof date === 'number') {
             const excelEpoch = new Date(1899, 11, 30);
-            date = new Date(excelEpoch.getTime() + date * 24 * 60 * 60 * 1000).getMonth() + 1;
+            date = new Date(excelEpoch.getTime() + date * 24 * 60 * 60 * 1000);
         }
+
         allMunicipalities.add(muni);
         const quarter = getQuarterFromDate(date);
-        const month = getMonthFromDate(date);
-
-        if (month) {
-            if (!monthlyCounts[month]) monthlyCounts[month] = 0;
-            monthlyCounts[month]++;
-        }
 
         const key = name + "||" + muni;
         if (!districtMap[key]) {
-            districtMap[key] = { name: name, municipality: muni, lat: lat, lng: lng, totalCount: 0, quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 }, satisfaction: { satisfied: 0, unsatisfied: 0 }, monthly: {} };
+            districtMap[key] = { name: name, municipality: muni, lat: lat, lng: lng, totalCount: 0, quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 }, satisfaction: { satisfied: 0, unsatisfied: 0 } };
         }
+
         districtMap[key].totalCount++;
-        if (quarter) { districtMap[key].quarters[quarter]++; }
-        if (month) {
-            if (!districtMap[key].monthly[month]) districtMap[key].monthly[month] = 0;
-            districtMap[key].monthly[month]++;
+        if (quarter) districtMap[key].quarters[quarter]++;
+
+        if (satisfaction) {
+            if (satisfaction.includes('راضي') && !satisfaction.includes('غير')) districtMap[key].satisfaction.satisfied++;
+            else if (satisfaction.includes('غير')) districtMap[key].satisfaction.unsatisfied++;
         }
-        if (satisfaction.includes('راضي') && !satisfaction.includes('غير')) districtMap[key].satisfaction.satisfied++;
-        else if (satisfaction.includes('غير')) districtMap[key].satisfaction.unsatisfied++;
+    }
+
+    console.log('Districts found:', Object.keys(districtMap).length);
+
+    if (Object.keys(districtMap).length === 0) {
+        alert('لم يتم العثور على بيانات صالحة في الملف. تأكد من أن الملف يحتوي على أعمدة: خط الطول، خط العرض، اسم الحي، البلدية');
+        return;
     }
 
     const muniMap = {};
     Object.values(districtMap).forEach(d => {
         if (!muniMap[d.municipality]) {
-            muniMap[d.municipality] = { name: d.municipality, districts: [], totalCount: 0, quarters: { Q1: 0, Q2: 0, QQ3: 0, Q4: 0 }, points: [], satisfaction: { Q1: {satisfied: 0, unsatisfied: 0}, Q2: {satisfied: 0, unsatisfied: 0}, Q3: {satisfied: 0, unsatisfied: 0}, Q4: {satisfied: 0, unsatisfied: 0} }, monthly: {} };
+            muniMap[d.municipality] = { name: d.municipality, districts: [], totalCount: 0, quarters: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 }, points: [], satisfaction: { Q1: {satisfied: 0, unsatisfied: 0}, Q2: {satisfied: 0, unsatisfied: 0}, Q3: {satisfied: 0, unsatisfied: 0}, Q4: {satisfied: 0, unsatisfied: 0} } };
         }
+
         muniMap[d.municipality].districts.push(d);
         muniMap[d.municipality].totalCount += d.totalCount;
         muniMap[d.municipality].quarters.Q1 += d.quarters.Q1;
@@ -763,34 +675,37 @@ function processRows(rows) {
         muniMap[d.municipality].quarters.Q4 += d.quarters.Q4;
         muniMap[d.municipality].points.push([d.lng, d.lat]);
 
-        for (let month in d.monthly) {
-            if (!muniMap[d.municipality].monthly[month]) muniMap[d.municipality].monthly[month] = 0;
-            muniMap[d.municipality].monthly[month] += d.monthly[month];
-        }
-
         if (d.quarters.Q1 > 0) { muniMap[d.municipality].satisfaction.Q1.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q1.unsatisfied += d.satisfaction.unsatisfied; }
         if (d.quarters.Q2 > 0) { muniMap[d.municipality].satisfaction.Q2.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q2.unsatisfied += d.satisfaction.unsatisfied; }
         if (d.quarters.Q3 > 0) { muniMap[d.municipality].satisfaction.Q3.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q3.unsatisfied += d.satisfaction.unsatisfied; }
         if (d.quarters.Q4 > 0) { muniMap[d.municipality].satisfaction.Q4.satisfied += d.satisfaction.satisfied; muniMap[d.municipality].satisfaction.Q4.unsatisfied += d.satisfaction.unsatisfied; }
     });
 
-    Object.values(muniMap).forEach(m => {
+    Object.values(muniMap).forEach((m, index) => {
         m.districts.sort((a, b) => b.totalCount - a.totalCount);
         m.topDistricts = m.districts.slice(0, 4);
-        m.color = municipalityColors[Object.keys(muniMap).indexOf(m.name) % municipalityColors.length];
+        m.color = municipalityColors[index % municipalityColors.length];
     });
 
     rawData = Object.values(muniMap).sort((a, b) => b.totalCount - a.totalCount);
 
-    window.globalMonthlyCounts = monthlyCounts;
+    console.log('Municipalities loaded:', rawData.length);
 
     fillSelect("municipalityFilter", allMunicipalities);
-    showNotification(`✅ تم تحميل ${rawData.length} بلدية`);
+
+    document.getElementById('emptyStateMap').style.display = 'none';
+    document.getElementById('emptyStateChart').style.display = 'none';
+    document.getElementById('chartWrapper').style.display = 'block';
+    document.getElementById('emptyStateCompare').style.display = 'none';
+    document.getElementById('quarterComparison').style.display = 'grid';
+
+    showNotification(`✅ تم تحميل ${rawData.length} بلدية و ${Object.keys(districtMap).length} حي`);
     applyCurrentFilter();
 }
 
 function fillSelect(id, set) {
     let el = document.getElementById(id);
+    if (!el) return;
     el.innerHTML = '<option value="all">' + (id === 'municipalityFilter' ? '🏛️ كل البلديات' : '📅 كل الأشهر') + '</option>';
     [...set].sort().forEach(v => { el.innerHTML += `<option value="${v}">${v}</option>`; });
 }
@@ -800,8 +715,10 @@ function applyCurrentFilter() {
     const muni = document.getElementById("municipalityFilter").value;
     const top = document.getElementById("filterSelect").value;
     const search = document.getElementById("searchBox").value.toLowerCase();
+
     const quarterNames = { 'all': 'الكل', 'Q1': 'الربع الأول', 'Q2': 'الربع الثاني', 'Q3': 'الربع الثالث', 'Q4': 'الربع الرابع' };
     document.getElementById("currentQuarterBadge").textContent = quarterNames[quarter] || quarter;
+
     let filtered = rawData.filter(d => (muni === "all" || d.name === muni) && d.name.toLowerCase().includes(search));
     if (quarter !== "all") {
         filtered.sort((a, b) => b.quarters[quarter] - a.quarters[quarter]);
@@ -817,6 +734,8 @@ function applyCurrentFilter() {
 }
 
 function createPolygonFromPoints(points, color) {
+    if (!points || points.length === 0) return null;
+
     if (points.length < 3) {
         const center = points.reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1]], [0, 0]);
         center[0] /= points.length; center[1] /= points.length;
@@ -828,6 +747,7 @@ function createPolygonFromPoints(points, color) {
         }
         return L.polygon(circlePoints.map(p => [p[1], p[0]]), { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
     }
+
     try {
         const pointsCollection = turf.points(points);
         const hull = turf.convex(pointsCollection);
@@ -835,45 +755,66 @@ function createPolygonFromPoints(points, color) {
             const coords = hull.geometry.coordinates[0].map(c => [c[1], c[0]]);
             return L.polygon(coords, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
         }
-    } catch (e) {}
+    } catch (e) { console.log('Turf error:', e); }
+
     const lats = points.map(p => p[1]), lngs = points.map(p => p[0]);
     const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
     return L.rectangle(bounds, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
 }
 
 function drawMap() {
-    if (!polygonLayer) return;
+    if (!polygonLayer || !map) return;
     polygonLayer.clearLayers();
 
-    // Clear labels container (labels are hidden now)
-    const labelsContainer = document.getElementById('labelsContainer');
-    if (labelsContainer) labelsContainer.innerHTML = '';
+    if (visibleMunicipalities.length === 0) {
+        document.getElementById('emptyStateMap').style.display = 'flex';
+        return;
+    }
 
-    if (visibleMunicipalities.length === 0) return;
-    const quarter = document.getElementById("quarterFilter").value;
+    document.getElementById('emptyStateMap').style.display = 'none';
 
     visibleMunicipalities.forEach(muni => {
-        const polygon = createPolygonFromPoints(muni.points, muni.color);
-        polygon.addTo(polygonLayer);
-        // Labels are now hidden - do not create them
+        if (muni.points && muni.points.length > 0) {
+            const polygon = createPolygonFromPoints(muni.points, muni.color);
+            if (polygon) {
+                polygon.addTo(polygonLayer);
+                const quarter = document.getElementById("quarterFilter").value;
+                const count = quarter === "all" ? muni.totalCount : muni.quarters[quarter];
+                polygon.bindPopup(`<b>${muni.name}</b><br>البلاغات: ${count}`);
+            }
+        }
     });
 
-    if (visibleMunicipalities.length > 0 && map) {
+    if (visibleMunicipalities.length > 0) {
         const allPoints = visibleMunicipalities.flatMap(m => m.points.map(p => [p[1], p[0]]));
         if (allPoints.length > 0) map.fitBounds(allPoints, { padding: [100, 100], maxZoom: 12 });
     }
 }
 
 function drawChart() {
-    if (chart) chart.destroy();
-    const ctx = document.getElementById("chart").getContext("2d");
+    if (chart) { chart.destroy(); chart = null; }
+
+    const ctx = document.getElementById("chart");
+    if (!ctx) return;
+
+    if (visibleMunicipalities.length === 0) {
+        document.getElementById('emptyStateChart').style.display = 'flex';
+        document.getElementById('chartWrapper').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('emptyStateChart').style.display = 'none';
+    document.getElementById('chartWrapper').style.display = 'block';
+
     const quarter = document.getElementById("quarterFilter").value;
     const labels = visibleMunicipalities.map(m => m.name);
     const data = visibleMunicipalities.map(m => quarter === "all" ? m.totalCount : m.quarters[quarter]);
     const colors = visibleMunicipalities.map(m => m.color);
+
     const canvasHeight = Math.max(400, labels.length * 50);
-    document.getElementById("chart").height = canvasHeight;
+    ctx.height = canvasHeight;
     document.getElementById("chartWrapper").style.height = canvasHeight + 'px';
+
     chart = new Chart(ctx, {
         type: 'bar',
         data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: 8, borderSkipped: false, barThickness: 30 }] },
@@ -887,6 +828,17 @@ function drawChart() {
 
 function updateQuarterComparison() {
     const container = document.getElementById("quarterComparison");
+    if (!container) return;
+
+    if (rawData.length === 0) {
+        document.getElementById('emptyStateCompare').style.display = 'flex';
+        container.style.display = 'none';
+        return;
+    }
+
+    document.getElementById('emptyStateCompare').style.display = 'none';
+    container.style.display = 'grid';
+
     const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
     const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
 
@@ -902,70 +854,28 @@ function updateQuarterComparison() {
     const maxTotal = Math.max(...Object.values(totals), 1);
     const months = ['يناير-مارس', 'إبريل-يونيو', 'يوليو-سبتمبر', 'أكتوبر-ديسمبر'];
 
-    const avgReports = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
-    const muniCount = rawData.length || 1;
-    avgReports.Q1 = Math.round(totals.Q1 / muniCount);
-    avgReports.Q2 = Math.round(totals.Q2 / muniCount);
-    avgReports.Q3 = Math.round(totals.Q3 / muniCount);
-    avgReports.Q4 = Math.round(totals.Q4 / muniCount);
+    const avgReports = { Q1: Math.round(totals.Q1 / (rawData.length || 1)), Q2: Math.round(totals.Q2 / (rawData.length || 1)), Q3: Math.round(totals.Q3 / (rawData.length || 1)), Q4: Math.round(totals.Q4 / (rawData.length || 1)) };
 
     container.innerHTML = quarters.map((q, i) => {
         const total = totals[q.key];
         const sat = satisfactionTotals[q.key];
         const totalReports = totals[q.key];
         const totalSat = sat.satisfied + sat.unsatisfied;
-        
-        let satisfiedPercent, unsatisfiedPercent, participationPercent;
-        
-        if (manualSatisfactionValues[q.key].satisfied !== null) {
-            satisfiedPercent = manualSatisfactionValues[q.key].satisfied;
-        } else {
-            satisfiedPercent = totalReports > 0 ? Math.round((sat.satisfied / totalReports) * 100) : 0;
-        }
-        
-        if (manualSatisfactionValues[q.key].unsatisfied !== null) {
-            unsatisfiedPercent = manualSatisfactionValues[q.key].unsatisfied;
-        } else {
-            unsatisfiedPercent = totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0;
-        }
-        
-        participationPercent = manualSatisfactionValues[q.key].participation !== null ? 
-            manualSatisfactionValues[q.key].participation : 
-            (totalReports > 0 ? Math.round((totalSat / totalReports) * 100) : 0);
-        
-        const avgValue = avgReports[q.key];
+
+        let satisfiedPercent = manualSatisfactionValues[q.key].satisfied !== null ? manualSatisfactionValues[q.key].satisfied : (totalReports > 0 ? Math.round((sat.satisfied / totalReports) * 100) : 0);
+        let unsatisfiedPercent = manualSatisfactionValues[q.key].unsatisfied !== null ? manualSatisfactionValues[q.key].unsatisfied : (totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0);
+        let participationPercent = manualSatisfactionValues[q.key].participation !== null ? manualSatisfactionValues[q.key].participation : (totalReports > 0 ? Math.round((totalSat / totalReports) * 100) : 0);
 
         return `<div class="quarter-card ${q.key.toLowerCase()}">
             <div class="quarter-title">${q.name}</div>
             <div class="quarter-months">${months[i]}</div>
             <div class="quarter-value" style="color:${q.color};">${total.toLocaleString()}</div>
-            <div style="margin:10px 0;background:#eee;height:8px;border-radius:4px;overflow:hidden;">
-                <div style="width:${(total / maxTotal * 100)}%;height:100%;background:${q.color};"></div>
-            </div>
+            <div style="margin:10px 0;background:#eee;height:8px;border-radius:4px;overflow:hidden;"><div style="width:${(total / maxTotal * 100)}%;height:100%;background:${q.color};"></div></div>
             <div class="satisfaction-boxes">
-                <div class="satisfaction-box participation">
-                    <div class="label">نسبة المشاركين</div>
-                    <div class="percentage">
-                        <input type="number" class="percentage-input" id="sat-${q.key}-participation" value="${participationPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'participation')">%
-                    </div>
-                </div>
-                <div class="satisfaction-box satisfied">
-                    <div class="label">نسبة الرضا</div>
-                    <div class="percentage">
-                        <input type="number" class="percentage-input" id="sat-${q.key}-satisfied" value="${satisfiedPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'satisfied')" onblur="validatePercentage('${q.key}')">%
-                    </div>
-                </div>
-                <div class="satisfaction-box unsatisfied" id="unsat-box-${q.key}">
-                    <button class="close-btn" onclick="hideUnsatisfiedBox('${q.key}')">×</button>
-                    <div class="label">نسبة عدم الرضا</div>
-                    <div class="percentage">
-                        <input type="number" class="percentage-input" id="sat-${q.key}-unsatisfied" value="${unsatisfiedPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'unsatisfied')">%
-                    </div>
-                </div>
-                <div class="satisfaction-box average">
-                    <div class="label">متوسط البلاغات</div>
-                    <div class="percentage">${avgValue.toLocaleString()}</div>
-                </div>
+                <div class="satisfaction-box participation"><div class="label">نسبة المشاركين</div><div class="percentage"><input type="number" class="percentage-input" id="sat-${q.key}-participation" value="${participationPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'participation')">%</div></div>
+                <div class="satisfaction-box satisfied"><div class="label">نسبة الرضا</div><div class="percentage"><input type="number" class="percentage-input" id="sat-${q.key}-satisfied" value="${satisfiedPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'satisfied')" onblur="validatePercentage('${q.key}')">%</div></div>
+                <div class="satisfaction-box unsatisfied" id="unsat-box-${q.key}"><button class="close-btn" onclick="hideUnsatisfiedBox('${q.key}')">×</button><div class="label">نسبة عدم الرضا</div><div class="percentage"><input type="number" class="percentage-input" id="sat-${q.key}-unsatisfied" value="${unsatisfiedPercent}" min="0" max="100" onchange="updateSatisfactionCount('${q.key}', 'unsatisfied')">%</div></div>
+                <div class="satisfaction-box average"><div class="label">متوسط البلاغات</div><div class="percentage">${avgReports[q.key].toLocaleString()}</div></div>
             </div>
         </div>`;
     }).join('');
@@ -973,6 +883,7 @@ function updateQuarterComparison() {
 
 function showQuarterComparison() {
     const section = document.getElementById("compareSection");
+    if (!section) return;
     if (!isCompareVisible) {
         section.style.display = "block";
         isCompareVisible = true;
@@ -998,7 +909,7 @@ function buildExport() {
 }
 
 function exportExcel() {
-    if (exportRows.length <= 1) { alert('لا توجد بيانات'); return; }
+    if (exportRows.length <= 1) { alert('لا توجد بيانات للتصدير. الرجاء رفع ملف Excel أولاً'); return; }
     let ws = XLSX.utils.aoa_to_sheet(exportRows);
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "البلديات");
@@ -1006,125 +917,87 @@ function exportExcel() {
 }
 
 function fitAll() {
-    if (visibleMunicipalities.length === 0 || !map) return;
+    if (visibleMunicipalities.length === 0 || !map) { alert('لا توجد بيانات لعرضها'); return; }
     const allPoints = visibleMunicipalities.flatMap(m => m.points.map(p => [p[1], p[0]]));
     if (allPoints.length > 0) map.fitBounds(allPoints, { padding: [100, 100] });
 }
 
 function clearAllData() { 
-    if (confirm('هل أنت متأكد؟')) {
-        labelPositions = {};
-        location.reload(); 
+    if (confirm('هل أنت متأكد من مسح جميع البيانات؟')) {
+        rawData = [];
+        visibleMunicipalities = [];
+        allMunicipalities.clear();
+
+        document.getElementById('emptyStateMap').style.display = 'flex';
+        document.getElementById('emptyStateChart').style.display = 'flex';
+        document.getElementById('chartWrapper').style.display = 'none';
+        document.getElementById('emptyStateCompare').style.display = 'flex';
+        document.getElementById('quarterComparison').style.display = 'none';
+        document.getElementById('mapSummaryOverlay').style.display = 'none';
+
+        if (polygonLayer) polygonLayer.clearLayers();
+        if (chart) { chart.destroy(); chart = null; }
+
+        document.getElementById('municipalityFilter').innerHTML = '<option value="all">🏛️ كل البلديات</option>';
+        document.getElementById('quarterFilter').value = 'all';
+        document.getElementById('filterSelect').value = 'all';
+        document.getElementById('searchBox').value = '';
+        document.getElementById('file').value = '';
+
+        showNotification('🗑️ تم مسح جميع البيانات');
     }
 }
 
 function showNotification(message) {
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
+
     const notif = document.createElement('div');
-    notif.style.cssText = 'position:fixed; top:90px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:white; padding:15px 30px; border-radius:30px; font-weight:600; z-index:100001;';
+    notif.className = 'notification';
+    notif.style.cssText = 'position:fixed; top:90px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:white; padding:15px 30px; border-radius:30px; font-weight:600; z-index:100001; transition: opacity 0.3s;';
     notif.textContent = message;
     document.body.appendChild(notif);
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-// Export Slide Function - Fixed using html2canvas
 async function exportSlide() {
+    if (rawData.length === 0) { alert('لا توجد بيانات للتصدير'); return; }
+
     const body = document.body;
     const mainContainer = document.getElementById('captureArea');
     const compareSection = document.getElementById('compareSection');
-    
-    // Show loading notification
+
     showNotification('⏳ جاري تصدير السلايد...');
-    
-    // Add export mode class (hides X buttons and zoom controls)
     body.classList.add('exporting');
-    
-    // Wait for map tiles to fully load
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Force map to render
-    if (map) {
-        map.invalidateSize();
-    }
-    
-    // Force chart to render
-    if (chart) {
-        chart.update('none');
-    }
-    
-    // Wait again for render
+    if (map) map.invalidateSize();
+    if (chart) chart.update('none');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     try {
-        // Create a wrapper div to hold both sections
         const wrapper = document.createElement('div');
         wrapper.style.cssText = 'position:fixed; top:0; left:0; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding:20px; z-index:99999; width:auto; height:auto;';
-        
-        // Clone main container
         const mainClone = mainContainer.cloneNode(true);
-        mainClone.style.margin = '0';
-        mainClone.style.marginBottom = '20px';
-        mainClone.style.height = '600px';
-        mainClone.style.width = '100%';
-        
-        // Clone compare section
+        mainClone.style.margin = '0'; mainClone.style.marginBottom = '20px'; mainClone.style.height = '600px'; mainClone.style.width = '100%';
         const compareClone = compareSection.cloneNode(true);
-        compareClone.style.margin = '0';
-        compareClone.style.padding = '0';
-        compareClone.style.width = '100%';
-        
-        wrapper.appendChild(mainClone);
-        wrapper.appendChild(compareClone);
-        document.body.appendChild(wrapper);
-        
-        // Calculate dimensions
+        compareClone.style.margin = '0'; compareClone.style.padding = '0'; compareClone.style.width = '100%';
+        wrapper.appendChild(mainClone); wrapper.appendChild(compareClone); document.body.appendChild(wrapper);
+
         const mainRect = mainClone.getBoundingClientRect();
         const compareRect = compareClone.getBoundingClientRect();
-        const totalWidth = Math.max(mainRect.width, compareRect.width);
-        const totalHeight = mainRect.height + compareRect.height + 40;
-        
-        wrapper.style.width = totalWidth + 'px';
-        wrapper.style.height = totalHeight + 'px';
-        
-        // Use html2canvas with proper options for Canvas support
-        const canvas = await html2canvas(wrapper, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#1e3c72',
-            logging: false,
-            onclone: function(clonedDoc) {
-                // Ensure all canvases are rendered in clone
-                const canvases = clonedDoc.querySelectorAll('canvas');
-                canvases.forEach(canvas => {
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.save();
-                    }
-                });
-            }
-        });
-        
-        // Remove wrapper
+        wrapper.style.width = Math.max(mainRect.width, compareRect.width) + 'px';
+        wrapper.style.height = (mainRect.height + compareRect.height + 40) + 'px';
+
+        const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#1e3c72', logging: false });
         document.body.removeChild(wrapper);
         body.classList.remove('exporting');
-        
-        // Convert to blob and save
+
         canvas.toBlob(function(blob) {
             if (blob) {
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
-                showNotification('✅ تم تصدير السلايد بنجاح');
-            } else {
-                // Fallback
-                const dataUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = `سلايد_تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
-                link.href = dataUrl;
-                link.click();
+                saveAs(blob, `سلايد_تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`);
                 showNotification('✅ تم تصدير السلايد بنجاح');
             }
         }, 'image/png');
-        
     } catch (error) {
         console.error('Export error:', error);
         body.classList.remove('exporting');
@@ -1133,8 +1006,12 @@ async function exportSlide() {
 }
 
 document.addEventListener('DOMContentLoaded', function() { 
-    initMap(); 
-    updateQuarterComparison();
+    initMap();
+    document.getElementById('emptyStateMap').style.display = 'flex';
+    document.getElementById('emptyStateChart').style.display = 'flex';
+    document.getElementById('chartWrapper').style.display = 'none';
+    document.getElementById('emptyStateCompare').style.display = 'flex';
+    document.getElementById('quarterComparison').style.display = 'none';
 });
 </script>
 </body>

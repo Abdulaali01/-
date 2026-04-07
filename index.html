@@ -329,59 +329,18 @@ body {
     .map-summary-overlay { display: none !important; }
 }
 
-/* Export Mode Styles - Landscape 16:9 */
-.exporting {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 1920px !important;
-    height: 1080px !important;
-    z-index: 99999 !important;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
-    padding: 20px !important;
-    overflow: hidden !important;
+/* Export Mode Styles - Hide X buttons only in export */
+.exporting .close-btn,
+.exporting .summary-close-btn-map {
+    display: none !important;
+}
+
+.exporting .custom-zoom {
+    display: none !important;
 }
 
 .exporting .top-bar {
     display: none !important;
-}
-
-.exporting .main-container {
-    margin-top: 0 !important;
-    height: 600px !important;
-    min-height: 600px !important;
-    flex-direction: row !important;
-}
-
-.exporting .map-wrapper {
-    height: 580px !important;
-    min-height: 580px !important;
-    flex: 1.5 !important;
-}
-
-.exporting .stats-section {
-    height: 580px !important;
-    min-height: 580px !important;
-    flex: 1 !important;
-    display: flex !important;
-}
-
-.exporting #compareSection {
-    margin-top: 15px !important;
-    height: 420px !important;
-    padding: 0 !important;
-}
-
-.exporting .compare-section {
-    height: 350px !important;
-}
-
-.exporting .quarter-card {
-    padding: 15px !important;
-}
-
-.exporting .quarter-value {
-    font-size: 32px !important;
 }
 </style>
 </head>
@@ -1050,14 +1009,16 @@ function showNotification(message) {
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-// Export Slide Function - Landscape HD
+// Export Slide Function - Capture only visible content
 async function exportSlide() {
     const body = document.body;
+    const mainContainer = document.getElementById('captureArea');
+    const compareSection = document.getElementById('compareSection');
     
     // Show loading notification
     showNotification('⏳ جاري تصدير السلايد...');
     
-    // Add export mode class
+    // Add export mode class (hides X buttons and zoom controls)
     body.classList.add('exporting');
     
     // Wait for map tiles to fully load
@@ -1072,34 +1033,54 @@ async function exportSlide() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
-        // Capture the entire dashboard
-        const blob = await domtoimage.toBlob(body, {
+        // Create a wrapper with exact content size
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:fixed; top:0; left:0; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding:20px; z-index:99999;';
+        
+        // Calculate exact dimensions needed
+        const mainRect = mainContainer.getBoundingClientRect();
+        const compareRect = compareSection.getBoundingClientRect();
+        
+        // Set wrapper size to fit content exactly
+        const totalWidth = Math.max(mainRect.width, compareRect.width) + 40; // + padding
+        const totalHeight = mainRect.height + compareRect.height + 60; // + gaps and padding
+        
+        wrapper.style.width = totalWidth + 'px';
+        wrapper.style.height = totalHeight + 'px';
+        
+        // Clone elements
+        const mainClone = mainContainer.cloneNode(true);
+        const compareClone = compareSection.cloneNode(true);
+        
+        // Remove margins in clone
+        mainClone.style.margin = '0';
+        mainClone.style.marginBottom = '20px';
+        compareClone.style.margin = '0';
+        compareClone.style.padding = '0';
+        
+        wrapper.appendChild(mainClone);
+        wrapper.appendChild(compareClone);
+        document.body.appendChild(wrapper);
+        
+        // Capture the wrapper
+        const blob = await domtoimage.toBlob(wrapper, {
             quality: 1,
             bgcolor: '#1e3c72',
             style: {
                 'transform': 'scale(1)',
                 'transform-origin': 'top left'
-            },
-            filter: function(node) {
-                // Hide zoom controls and other UI elements during capture
-                if (node.classList && (
-                    node.classList.contains('custom-zoom') ||
-                    node.classList.contains('leaflet-control-container')
-                )) {
-                    return false;
-                }
-                return true;
             }
         });
         
-        // Remove export mode
+        // Remove wrapper
+        document.body.removeChild(wrapper);
         body.classList.remove('exporting');
         
         // Save the image
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
         saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
         
-        showNotification('✅ تم تصدير السلايد بنجاح (1920x1080 HD)');
+        showNotification('✅ تم تصدير السلايد بنجاح');
         
     } catch (error) {
         console.error('Export error:', error);

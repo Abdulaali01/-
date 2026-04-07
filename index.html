@@ -51,6 +51,7 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; 
 }
 
+/* Main Layout - Horizontal */
 .main-container { 
     margin-top: 70px; 
     padding: 15px; 
@@ -58,19 +59,60 @@ body {
     flex-direction: row;
     gap: 15px; 
     height: calc(100vh - 90px);
-    min-height: 600px;
+    min-height: 500px;
 }
 
+/* Stats Section (Chart) - Left side */
+.stats-section { 
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+    flex: 1;
+    height: 100%;
+    min-width: 400px;
+    order: 2;
+}
+
+.card { 
+    background: white; 
+    border-radius: 20px; 
+    padding: 20px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15); 
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.card-title { 
+    font-size: 20px; font-weight: 800; color: #1a1a1a; 
+    margin-bottom: 15px; padding-bottom: 10px; 
+    border-bottom: 3px solid #1e3c72; 
+    display: flex; align-items: center; gap: 8px; 
+    flex-shrink: 0;
+}
+.quarter-badge { 
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+    color: white; padding: 4px 12px; border-radius: 20px; 
+    font-size: 12px; font-weight: bold; 
+}
+
+.chart-scroll-container { 
+    position: relative; flex: 1;
+    overflow-y: auto; overflow-x: hidden; 
+    border-radius: 10px; background: #f8f9fa; padding: 10px; 
+}
+
+/* Map Section - Right side */
 .map-wrapper { 
     background: white; 
     border-radius: 20px; 
     overflow: hidden; 
     box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
     position: relative; 
-    flex: 1.2;
+    flex: 1.5;
     height: 100%;
     min-height: 500px;
-    order: 2;
+    order: 1;
 }
 #map { height: 100%; width: 100%; z-index: 1; }
 
@@ -192,46 +234,7 @@ body {
     color: #1e3c72; font-weight: bold; 
 }
 
-.stats-section { 
-    display: flex;
-    flex-direction: column;
-    gap: 15px; 
-    flex: 1;
-    height: 100%;
-    min-width: 350px;
-    order: 1;
-}
-
-.card { 
-    background: white; 
-    border-radius: 20px; 
-    padding: 20px; 
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15); 
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-.card-title { 
-    font-size: 20px; font-weight: 800; color: #1a1a1a; 
-    margin-bottom: 15px; padding-bottom: 10px; 
-    border-bottom: 3px solid #1e3c72; 
-    display: flex; align-items: center; gap: 8px; 
-    flex-shrink: 0;
-}
-.quarter-badge { 
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-    color: white; padding: 4px 12px; border-radius: 20px; 
-    font-size: 12px; font-weight: bold; 
-}
-
-.chart-scroll-container { 
-    position: relative; flex: 1;
-    overflow-y: auto; overflow-x: hidden; 
-    border-radius: 10px; background: #f8f9fa; padding: 10px; 
-}
-
-/* Compare Section - Always visible at bottom */
+/* Compare Section - Bottom */
 #compareSection {
     display: block !important;
     margin-top: 20px;
@@ -326,17 +329,17 @@ body {
     .map-summary-overlay { display: none !important; }
 }
 
-/* Export Mode Styles */
+/* Export Mode Styles - Landscape 16:9 */
 .exporting {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    width: 1920px !important;
+    height: 1080px !important;
     z-index: 99999 !important;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
     padding: 20px !important;
-    overflow: auto !important;
+    overflow: hidden !important;
 }
 
 .exporting .top-bar {
@@ -345,12 +348,40 @@ body {
 
 .exporting .main-container {
     margin-top: 0 !important;
-    height: 60vh !important;
+    height: 600px !important;
+    min-height: 600px !important;
+    flex-direction: row !important;
+}
+
+.exporting .map-wrapper {
+    height: 580px !important;
+    min-height: 580px !important;
+    flex: 1.5 !important;
+}
+
+.exporting .stats-section {
+    height: 580px !important;
+    min-height: 580px !important;
+    flex: 1 !important;
+    display: flex !important;
 }
 
 .exporting #compareSection {
-    margin-top: 20px !important;
-    height: 35vh !important;
+    margin-top: 15px !important;
+    height: 420px !important;
+    padding: 0 !important;
+}
+
+.exporting .compare-section {
+    height: 350px !important;
+}
+
+.exporting .quarter-card {
+    padding: 15px !important;
+}
+
+.exporting .quarter-value {
+    font-size: 32px !important;
 }
 </style>
 </head>
@@ -384,16 +415,7 @@ body {
 </div>
 
 <div class="main-container" id="captureArea">
-    <div class="stats-section" id="statsSection">
-        <div class="card">
-            <div class="card-title">📊 توزيع البلديات <span class="quarter-badge" id="currentQuarterBadge">الكل</span></div>
-            <div class="chart-scroll-container">
-                <div class="chart-canvas-wrapper" id="chartWrapper">
-                    <canvas id="chart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Map on Right (Order 1 in RTL) -->
     <div class="map-wrapper" id="mapSection">
         <div id="map"></div>
         <div id="labelsContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></div>
@@ -421,9 +443,21 @@ body {
             <button class="zoom-btn" onclick="map.zoomOut()">−</button>
         </div>
     </div>
+
+    <!-- Stats/Chart on Left (Order 2 in RTL) -->
+    <div class="stats-section" id="statsSection">
+        <div class="card">
+            <div class="card-title">📊 توزيع البلديات <span class="quarter-badge" id="currentQuarterBadge">الكل</span></div>
+            <div class="chart-scroll-container">
+                <div class="chart-canvas-wrapper" id="chartWrapper">
+                    <canvas id="chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Quarter Comparison - Always visible at bottom -->
+<!-- Quarter Comparison - Bottom -->
 <div id="compareSection">
     <div class="card">
         <div class="card-title">📊 مقارنة الأداء الربع سنوي</div>
@@ -1016,16 +1050,9 @@ function showNotification(message) {
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
-// Export Slide Function - Fixed using dom-to-image
+// Export Slide Function - Landscape HD
 async function exportSlide() {
     const body = document.body;
-    const captureArea = document.getElementById('captureArea');
-    const compareSection = document.getElementById('compareSection');
-    
-    if (!captureArea || !compareSection) {
-        alert('لا يوجد محتوى للتصدير');
-        return;
-    }
     
     // Show loading notification
     showNotification('⏳ جاري تصدير السلايد...');
@@ -1072,7 +1099,7 @@ async function exportSlide() {
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
         saveAs(blob, `سلايد_تحليل_البلديات_${timestamp}.png`);
         
-        showNotification('✅ تم تصدير السلايد بنجاح');
+        showNotification('✅ تم تصدير السلايد بنجاح (1920x1080 HD)');
         
     } catch (error) {
         console.error('Export error:', error);

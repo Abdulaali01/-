@@ -963,44 +963,91 @@ function showNotification(message) {
 async function exportSlide() {
     if (rawData.length === 0) { alert('لا توجد بيانات للتصدير'); return; }
 
-    const body = document.body;
-    const mainContainer = document.getElementById('captureArea');
-    const compareSection = document.getElementById('compareSection');
-
     showNotification('⏳ جاري تصدير السلايد...');
-    body.classList.add('exporting');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    if (map) map.invalidateSize();
-    if (chart) chart.update('none');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    document.body.classList.add('exporting');
+
+    // Wait for map tiles to fully render
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     try {
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:fixed; top:0; left:0; background:linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding:20px; z-index:99999; width:auto; height:auto;';
-        const mainClone = mainContainer.cloneNode(true);
-        mainClone.style.margin = '0'; mainClone.style.marginBottom = '20px'; mainClone.style.height = '600px'; mainClone.style.width = '100%';
-        const compareClone = compareSection.cloneNode(true);
-        compareClone.style.margin = '0'; compareClone.style.padding = '0'; compareClone.style.width = '100%';
-        wrapper.appendChild(mainClone); wrapper.appendChild(compareClone); document.body.appendChild(wrapper);
+        // Use leaflet-image plugin to capture the map as an image
+        const mapElement = document.getElementById('map');
+        const mapContainer = document.getElementById('mapSection');
+        const chartContainer = document.getElementById('statsSection');
+        const compareContainer = document.getElementById('compareSection');
 
-        const mainRect = mainClone.getBoundingClientRect();
-        const compareRect = compareClone.getBoundingClientRect();
-        wrapper.style.width = Math.max(mainRect.width, compareRect.width) + 'px';
-        wrapper.style.height = (mainRect.height + compareRect.height + 40) + 'px';
+        // Create a canvas to combine everything
+        const finalCanvas = document.createElement('canvas');
+        const ctx = finalCanvas.getContext('2d');
 
-        const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#1e3c72', logging: false });
-        document.body.removeChild(wrapper);
-        body.classList.remove('exporting');
+        // Set dimensions (1920x1080 for slide format)
+        finalCanvas.width = 1920;
+        finalCanvas.height = 1080;
 
-        canvas.toBlob(function(blob) {
+        // Fill background
+        const gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
+        gradient.addColorStop(0, '#1e3c72');
+        gradient.addColorStop(1, '#2a5298');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1920, 1080);
+
+        // Capture map using html2canvas with special options
+        const mapCanvas = await html2canvas(mapContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false,
+            onclone: function(clonedDoc) {
+                // Ensure map is visible in clone
+                const clonedMap = clonedDoc.getElementById('map');
+                if (clonedMap) {
+                    clonedMap.style.width = '100%';
+                    clonedMap.style.height = '100%';
+                }
+            }
+        });
+
+        // Draw map on left side (60% width)
+        ctx.drawImage(mapCanvas, 20, 20, 1140, 600);
+
+        // Capture chart
+        const chartCanvas = await html2canvas(chartContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        });
+
+        // Draw chart on right side (40% width)
+        ctx.drawImage(chartCanvas, 1180, 20, 720, 600);
+
+        // Capture comparison section
+        const compareCanvas = await html2canvas(compareContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        });
+
+        // Draw comparison at bottom
+        ctx.drawImage(compareCanvas, 20, 640, 1880, 420);
+
+        document.body.classList.remove('exporting');
+
+        // Save the image
+        finalCanvas.toBlob(function(blob) {
             if (blob) {
                 saveAs(blob, `سلايد_تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`);
                 showNotification('✅ تم تصدير السلايد بنجاح');
             }
         }, 'image/png');
+
     } catch (error) {
         console.error('Export error:', error);
-        body.classList.remove('exporting');
+        document.body.classList.remove('exporting');
         alert('حدث خطأ أثناء التصدير: ' + error.message);
     }
 }

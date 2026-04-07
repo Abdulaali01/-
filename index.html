@@ -745,7 +745,7 @@ function createPolygonFromPoints(points, color) {
             const angle = (i * 10) * Math.PI / 180;
             circlePoints.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)]);
         }
-        return L.polygon(circlePoints.map(p => [p[1], p[0]]), { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
+        return L.polygon(circlePoints.map(p => [p[1], p[0]]), { color: color, fillColor: color, fillOpacity: 0.7, weight: 4, opacity: 1 });
     }
 
     try {
@@ -753,13 +753,13 @@ function createPolygonFromPoints(points, color) {
         const hull = turf.convex(pointsCollection);
         if (hull) {
             const coords = hull.geometry.coordinates[0].map(c => [c[1], c[0]]);
-            return L.polygon(coords, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
+            return L.polygon(coords, { color: color, fillColor: color, fillOpacity: 0.7, weight: 4, opacity: 1 });
         }
     } catch (e) { console.log('Turf error:', e); }
 
     const lats = points.map(p => p[1]), lngs = points.map(p => p[0]);
     const bounds = [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
-    return L.rectangle(bounds, { color: color, fillColor: color, fillOpacity: 0.3, weight: 3 });
+    return L.rectangle(bounds, { color: color, fillColor: color, fillOpacity: 0.7, weight: 4, opacity: 1 });
 }
 
 function drawMap() {
@@ -780,7 +780,7 @@ function drawMap() {
                 polygon.addTo(polygonLayer);
                 const quarter = document.getElementById("quarterFilter").value;
                 const count = quarter === "all" ? muni.totalCount : muni.quarters[quarter];
-                polygon.bindPopup(`<b>${muni.name}</b><br>البلاغات: ${count}`);
+                polygon.bindPopup(`<div style='font-family:Segoe UI;text-align:center;'><b style='font-size:16px;color:#1e3c72;'>${muni.name}</b><br><span style='font-size:14px;color:#666;'>البلاغات: <b style='color:#e74c3c;'>${count}</b></span></div>`);
             }
         }
     });

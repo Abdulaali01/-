@@ -1165,6 +1165,47 @@ function showNotification(message) {
     setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 300); }, 3000);
 }
 
+// Export Slide Function - Fixed
+function exportSlide() {
+    const captureArea = document.getElementById('captureArea');
+    if (!captureArea) {
+        alert('لا يوجد محتوى للتصدير');
+        return;
+    }
+    
+    // Show loading notification
+    showNotification('⏳ جاري تصدير الصورة...');
+    
+    // Use html2canvas to capture the dashboard
+    html2canvas(captureArea, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1e3c72',
+        logging: false
+    }).then(canvas => {
+        // Convert to blob and save
+        canvas.toBlob(function(blob) {
+            if (blob) {
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                saveAs(blob, `تحليل_البلديات_${timestamp}.png`);
+                showNotification('✅ تم تصدير الصورة بنجاح');
+            } else {
+                // Fallback: use data URL
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `تحليل_البلديات_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+                link.href = dataUrl;
+                link.click();
+                showNotification('✅ تم تصدير الصورة بنجاح');
+            }
+        }, 'image/png');
+    }).catch(error => {
+        console.error('Export error:', error);
+        alert('حدث خطأ أثناء التصدير: ' + error.message);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() { initMap(); });
 </script>
 </body>

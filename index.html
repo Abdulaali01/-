@@ -74,6 +74,96 @@ body {
 }
 #map { height: 100%; width: 100%; z-index: 1; }
 
+/* Map Summary Overlay - positioned top right */
+.map-summary-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 1000;
+    min-width: 200px;
+    border: 2px solid #1e3c72;
+    display: none;
+}
+.map-summary-overlay h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #1e3c72;
+    text-align: center;
+    border-bottom: 2px solid #1e3c72;
+    padding-bottom: 8px;
+    font-weight: bold;
+}
+.summary-box-map {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border: 2px solid;
+    position: relative;
+}
+.summary-box-map:last-child {
+    margin-bottom: 0;
+}
+.summary-box-map.participation { border-color: #17a2b8; background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); }
+.summary-box-map.satisfied { border-color: #28a745; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); }
+.summary-box-map.unsatisfied { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); }
+.summary-box-map .summary-title {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.summary-box-map.participation .summary-title { color: #0c5460; }
+.summary-box-map.satisfied .summary-title { color: #155724; }
+.summary-box-map.unsatisfied .summary-title { color: #721c24; }
+.summary-box-map .summary-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+.summary-box-map.participation .summary-value { color: #17a2b8; }
+.summary-box-map.satisfied .summary-value { color: #28a745; }
+.summary-box-map.unsatisfied .summary-value { color: #dc3545; }
+.summary-box-map input.summary-input {
+    width: 50px;
+    border: 2px solid transparent;
+    background: rgba(255,255,255,0.8);
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    color: inherit;
+    padding: 3px;
+    border-radius: 6px;
+    font-family: inherit;
+}
+.summary-box-map input.summary-input:focus {
+    outline: none;
+    background: white;
+    border-color: #1e3c72;
+}
+.summary-close-btn-map {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hidden { display: none !important; }
+
+/* Map Table Overlay */
 .map-table-overlay {
     position: absolute;
     bottom: 20px;
@@ -224,7 +314,6 @@ body {
 .quarter-months { font-size: 11px; color: #666; margin-bottom: 10px; }
 .quarter-value { font-size: 28px; font-weight: bold; color: #1e3c72; margin: 8px 0; }
 
-/* Satisfaction boxes with unsatisfied */
 .satisfaction-boxes { display: flex; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
 .satisfaction-box { flex: 1; padding: 8px 5px; border-radius: 8px; text-align: center; font-size: 11px; min-width: 70px; position: relative; }
 .satisfaction-box.satisfied { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; }
@@ -241,9 +330,7 @@ body {
 .satisfaction-box.unsatisfied .percentage { color: #dc3545; }
 .satisfaction-box.participation .percentage { color: #17a2b8; }
 .satisfaction-box.average .percentage { color: #856404; }
-.satisfaction-box .count { font-size: 10px; color: #666; margin-top: 2px; }
 
-/* Close button for unsatisfied box */
 .close-btn {
     position: absolute;
     top: -8px;
@@ -262,7 +349,6 @@ body {
     z-index: 10;
 }
 
-/* Editable satisfaction inputs */
 .satisfaction-box input.percentage-input {
     width: 40px;
     border: 2px solid transparent;
@@ -282,90 +368,21 @@ body {
     border-color: #1e3c72;
 }
 
-/* Summary Section - 3 boxes */
-.summary-section {
-    display: none;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-bottom: 20px;
-    padding: 0 20px;
-}
-.summary-box {
-    background: white;
-    border-radius: 15px;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    border: 3px solid;
-    position: relative;
-}
-.summary-box.participation-total { border-color: #17a2b8; background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); }
-.summary-box.satisfied-total { border-color: #28a745; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); }
-.summary-box.unsatisfied-total { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); }
-.summary-box .summary-title {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-.summary-box.participation-total .summary-title { color: #0c5460; }
-.summary-box.satisfied-total .summary-title { color: #155724; }
-.summary-box.unsatisfied-total .summary-title { color: #721c24; }
-.summary-box .summary-value {
-    font-size: 32px;
-    font-weight: bold;
-    margin: 10px 0;
-}
-.summary-box.participation-total .summary-value { color: #17a2b8; }
-.summary-box.satisfied-total .summary-value { color: #28a745; }
-.summary-box.unsatisfied-total .summary-value { color: #dc3545; }
-.summary-box input.summary-input {
-    width: 60px;
-    border: 2px solid transparent;
-    background: rgba(255,255,255,0.8);
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    color: inherit;
-    padding: 5px;
-    border-radius: 8px;
-    font-family: inherit;
-}
-.summary-box input.summary-input:focus {
-    outline: none;
-    background: white;
-    border-color: #1e3c72;
-}
-.summary-close-btn {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.hidden { display: none !important; }
-
 @media (max-width: 1400px) { 
     .main-container { flex-direction: column; height: auto; }
     .map-wrapper { flex: none; height: 60vh; min-height: 400px; order: 1; }
     .stats-section { flex: none; min-width: auto; order: 2; }
     .compare-section { grid-template-columns: repeat(2, 1fr); }
-    .summary-section { grid-template-columns: 1fr; }
+    .map-summary-overlay { min-width: 150px; padding: 10px; }
+    .summary-box-map { padding: 8px; }
+    .summary-box-map .summary-value { font-size: 18px; }
 }
 @media (max-width: 768px) { 
     .main-container { flex-direction: column; }
     .map-wrapper { height: 50vh; order: 1; }
     .stats-section { order: 2; }
     .compare-section { grid-template-columns: 1fr; }
-    .summary-section { grid-template-columns: 1fr; }
+    .map-summary-overlay { display: none !important; }
 }
 </style>
 </head>
@@ -412,31 +429,35 @@ body {
     <div class="map-wrapper" id="mapSection">
         <div id="map"></div>
         <div id="labelsContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></div>
+        
+        <!-- Map Summary Overlay - positioned top right -->
+        <div class="map-summary-overlay" id="mapSummaryOverlay">
+            <h4>📊 إجمالي النسب</h4>
+            <div class="summary-box-map participation" id="participationBox">
+                <div class="summary-title">📊 نسبة المشاركين</div>
+                <div class="summary-value"><input type="number" class="summary-input" id="summary-participation" value="0" min="0" max="100" onchange="updateSummaryValue('participation')">%</div>
+            </div>
+            <div class="summary-box-map satisfied" id="satisfiedBox">
+                <div class="summary-title">😊 نسبة الراضين</div>
+                <div class="summary-value"><input type="number" class="summary-input" id="summary-satisfied" value="0" min="0" max="100" onchange="updateSummaryValue('satisfied')">%</div>
+            </div>
+            <div class="summary-box-map unsatisfied" id="unsatisfiedBox">
+                <button class="summary-close-btn-map" onclick="hideUnsatisfiedBoxMap()">×</button>
+                <div class="summary-title">😞 نسبة غير الراضين</div>
+                <div class="summary-value"><input type="number" class="summary-input" id="summary-unsatisfied" value="0" min="0" max="100" onchange="updateSummaryValue('unsatisfied')">%</div>
+            </div>
+        </div>
+
+        <!-- Map Table Overlay - positioned bottom left -->
         <div class="map-table-overlay" id="mapTableOverlay">
             <h4>📅 توزيع البلاغات</h4>
             <table><thead><tr><th>الشهر</th><th>البلاغات</th></tr></thead><tbody id="mapTableBody"></tbody></table>
         </div>
+
         <div class="custom-zoom">
             <button class="zoom-btn" onclick="map.zoomIn()">+</button>
             <button class="zoom-btn" onclick="map.zoomOut()">−</button>
         </div>
-    </div>
-</div>
-
-<!-- Summary Section - 3 Total Boxes -->
-<div class="summary-section" id="summarySection">
-    <div class="summary-box participation-total">
-        <div class="summary-title">📊 إجمالي نسبة المشاركين</div>
-        <div class="summary-value"><input type="number" class="summary-input" id="summary-participation" value="0" min="0" max="100" onchange="updateSummaryValue('participation')">%</div>
-    </div>
-    <div class="summary-box satisfied-total">
-        <div class="summary-title">😊 إجمالي نسبة الراضين</div>
-        <div class="summary-value"><input type="number" class="summary-input" id="summary-satisfied" value="0" min="0" max="100" onchange="updateSummaryValue('satisfied')">%</div>
-    </div>
-    <div class="summary-box unsatisfied-total" id="unsatisfiedSummaryBox">
-        <button class="summary-close-btn" onclick="hideUnsatisfiedSummary()">×</button>
-        <div class="summary-title">😞 إجمالي نسبة غير الراضين</div>
-        <div class="summary-value"><input type="number" class="summary-input" id="summary-unsatisfied" value="0" min="0" max="100" onchange="updateSummaryValue('unsatisfied')">%</div>
     </div>
 </div>
 
@@ -560,15 +581,54 @@ function updateSatisfactionCount(quarter, type) {
     input.value = value;
     manualSatisfactionValues[quarter][type] = value;
     
-    // Auto-calculate participation = satisfied + unsatisfied
+    // Recalculate participation based on satisfied + unsatisfied
     if (type === 'satisfied' || type === 'unsatisfied') {
-        const sat = manualSatisfactionValues[quarter].satisfied || 0;
-        const unsat = manualSatisfactionValues[quarter].unsatisfied || 0;
-        const participation = Math.min(sat + unsat, 100);
-        manualSatisfactionValues[quarter].participation = participation;
-        const partInput = document.getElementById(`sat-${quarter}-participation`);
-        if (partInput) partInput.value = participation;
+        calculateParticipation(quarter);
     }
+    
+    // Update summary
+    updateMapSummary();
+}
+
+function calculateParticipation(quarter) {
+    // Get totals for this quarter
+    const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+    const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
+    
+    rawData.forEach(m => {
+        totals.Q1 += m.quarters.Q1; totals.Q2 += m.quarters.Q2; totals.Q3 += m.quarters.Q3; totals.Q4 += m.quarters.Q4;
+        satisfactionTotals.Q1.satisfied += m.satisfaction.Q1.satisfied; satisfactionTotals.Q1.unsatisfied += m.satisfaction.Q1.unsatisfied;
+        satisfactionTotals.Q2.satisfied += m.satisfaction.Q2.satisfied; satisfactionTotals.Q2.unsatisfied += m.satisfaction.Q2.unsatisfied;
+        satisfactionTotals.Q3.satisfied += m.satisfaction.Q3.satisfied; satisfactionTotals.Q3.unsatisfied += m.satisfaction.Q3.unsatisfied;
+        satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied; satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
+    });
+    
+    const totalReports = totals[quarter];
+    const sat = satisfactionTotals[quarter];
+    
+    // Use manual values if set, otherwise use calculated
+    let satisfied = manualSatisfactionValues[quarter].satisfied !== null ? 
+        manualSatisfactionValues[quarter].satisfied : 
+        (totalReports > 0 ? Math.round((sat.satisfied / totalReports) * 100) : 0);
+    
+    let unsatisfied = manualSatisfactionValues[quarter].unsatisfied !== null ? 
+        manualSatisfactionValues[quarter].unsatisfied : 
+        (totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0);
+    
+    // Participation = (satisfied + unsatisfied) / total reports * 100
+    let participation = 0;
+    if (totalReports > 0) {
+        const totalSat = sat.satisfied + sat.unsatisfied;
+        participation = Math.round((totalSat / totalReports) * 100);
+    }
+    
+    // Update participation input
+    const partInput = document.getElementById(`sat-${quarter}-participation`);
+    if (partInput && manualSatisfactionValues[quarter].participation === null) {
+        partInput.value = participation;
+    }
+    
+    manualSatisfactionValues[quarter].participation = participation;
 }
 
 function validatePercentage(quarter) {
@@ -589,13 +649,13 @@ function resetSatisfactionValues() {
     };
     summaryValues = { participation: null, satisfied: null, unsatisfied: null };
     updateQuarterComparison();
-    updateSummarySection();
+    updateMapSummary();
     showNotification('✅ تم إعادة ضبط النسب للقيم المحسوبة');
 }
 
-// Hide unsatisfied summary box
-function hideUnsatisfiedSummary() {
-    document.getElementById('unsatisfiedSummaryBox').classList.add('hidden');
+// Hide unsatisfied box in map overlay
+function hideUnsatisfiedBoxMap() {
+    document.getElementById('unsatisfiedBox').classList.add('hidden');
 }
 
 // Hide unsatisfied box for specific quarter
@@ -614,31 +674,61 @@ function updateSummaryValue(type) {
     summaryValues[type] = value;
 }
 
-// Update summary section display
-function updateSummarySection() {
-    // Calculate totals from quarters
-    const totals = { participation: 0, satisfied: 0, unsatisfied: 0 };
-    let count = 0;
+// Update map summary overlay
+function updateMapSummary() {
+    const overlay = document.getElementById('mapSummaryOverlay');
+    if (rawData.length === 0) {
+        overlay.style.display = 'none';
+        return;
+    }
+    overlay.style.display = 'block';
     
+    // Calculate totals for all quarters
+    const totals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+    const satisfactionTotals = { Q1: { satisfied: 0, unsatisfied: 0 }, Q2: { satisfied: 0, unsatisfied: 0 }, Q3: { satisfied: 0, unsatisfied: 0 }, Q4: { satisfied: 0, unsatisfied: 0 } };
+    
+    rawData.forEach(m => {
+        totals.Q1 += m.quarters.Q1; totals.Q2 += m.quarters.Q2; totals.Q3 += m.quarters.Q3; totals.Q4 += m.quarters.Q4;
+        satisfactionTotals.Q1.satisfied += m.satisfaction.Q1.satisfied; satisfactionTotals.Q1.unsatisfied += m.satisfaction.Q1.unsatisfied;
+        satisfactionTotals.Q2.satisfied += m.satisfaction.Q2.satisfied; satisfactionTotals.Q2.unsatisfied += m.satisfaction.Q2.unsatisfied;
+        satisfactionTotals.Q3.satisfied += m.satisfaction.Q3.satisfied; satisfactionTotals.Q3.unsatisfied += m.satisfaction.Q3.unsatisfied;
+        satisfactionTotals.Q4.satisfied += m.satisfaction.Q4.satisfied; satisfactionTotals.Q4.unsatisfied += m.satisfaction.Q4.unsatisfied;
+    });
+    
+    // Calculate participation for each quarter
+    const participations = [];
     ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
-        if (manualSatisfactionValues[q].participation !== null) {
-            totals.participation += manualSatisfactionValues[q].participation;
-            totals.satisfied += manualSatisfactionValues[q].satisfied || 0;
-            totals.unsatisfied += manualSatisfactionValues[q].unsatisfied || 0;
-            count++;
+        const totalReports = totals[q];
+        const sat = satisfactionTotals[q];
+        if (totalReports > 0) {
+            const totalSat = sat.satisfied + sat.unsatisfied;
+            participations.push(Math.round((totalSat / totalReports) * 100));
         }
     });
     
-    if (count > 0) {
-        if (summaryValues.participation === null) {
-            document.getElementById('summary-participation').value = Math.round(totals.participation / count);
-        }
-        if (summaryValues.satisfied === null) {
-            document.getElementById('summary-satisfied').value = Math.round(totals.satisfied / count);
-        }
-        if (summaryValues.unsatisfied === null) {
-            document.getElementById('summary-unsatisfied').value = Math.round(totals.unsatisfied / count);
-        }
+    // Average participation
+    let avgParticipation = 0;
+    if (participations.length > 0) {
+        avgParticipation = Math.round(participations.reduce((a, b) => a + b, 0) / participations.length);
+    }
+    
+    // Calculate satisfied and unsatisfied percentages
+    let totalReportsAll = totals.Q1 + totals.Q2 + totals.Q3 + totals.Q4;
+    let totalSatisfied = satisfactionTotals.Q1.satisfied + satisfactionTotals.Q2.satisfied + satisfactionTotals.Q3.satisfied + satisfactionTotals.Q4.satisfied;
+    let totalUnsatisfied = satisfactionTotals.Q1.unsatisfied + satisfactionTotals.Q2.unsatisfied + satisfactionTotals.Q3.unsatisfied + satisfactionTotals.Q4.unsatisfied;
+    
+    let avgSatisfied = totalReportsAll > 0 ? Math.round((totalSatisfied / totalReportsAll) * 100) : 0;
+    let avgUnsatisfied = totalReportsAll > 0 ? Math.round((totalUnsatisfied / totalReportsAll) * 100) : 0;
+    
+    // Update inputs if not manually set
+    if (summaryValues.participation === null) {
+        document.getElementById('summary-participation').value = avgParticipation;
+    }
+    if (summaryValues.satisfied === null) {
+        document.getElementById('summary-satisfied').value = avgSatisfied;
+    }
+    if (summaryValues.unsatisfied === null) {
+        document.getElementById('summary-unsatisfied').value = avgUnsatisfied;
     }
 }
 
@@ -857,10 +947,8 @@ function applyCurrentFilter() {
     drawChart();
     buildExport();
     updateMapTable();
-    if (isCompareVisible) {
-        updateQuarterComparison();
-        updateSummarySection();
-    }
+    updateMapSummary();
+    if (isCompareVisible) updateQuarterComparison();
 }
 
 function createPolygonFromPoints(points, color) {
@@ -961,27 +1049,28 @@ function updateQuarterComparison() {
     container.innerHTML = quarters.map((q, i) => {
         const total = totals[q.key];
         const sat = satisfactionTotals[q.key];
+        const totalReports = totals[q.key];
         const totalSat = sat.satisfied + sat.unsatisfied;
         
-        // Calculate percentages
+        // Calculate percentages based on total reports for the quarter
         let satisfiedPercent, unsatisfiedPercent, participationPercent;
         
         if (manualSatisfactionValues[q.key].satisfied !== null) {
             satisfiedPercent = manualSatisfactionValues[q.key].satisfied;
         } else {
-            satisfiedPercent = totalSat > 0 ? Math.round((sat.satisfied / totalSat) * 100) : 0;
+            satisfiedPercent = totalReports > 0 ? Math.round((sat.satisfied / totalReports) * 100) : 0;
         }
         
         if (manualSatisfactionValues[q.key].unsatisfied !== null) {
             unsatisfiedPercent = manualSatisfactionValues[q.key].unsatisfied;
         } else {
-            unsatisfiedPercent = totalSat > 0 ? Math.round((sat.unsatisfied / totalSat) * 100) : 0;
+            unsatisfiedPercent = totalReports > 0 ? Math.round((sat.unsatisfied / totalReports) * 100) : 0;
         }
         
-        // Participation = satisfied + unsatisfied (auto-calculated)
+        // Participation = (satisfied + unsatisfied) / total reports * 100
         participationPercent = manualSatisfactionValues[q.key].participation !== null ? 
             manualSatisfactionValues[q.key].participation : 
-            Math.min(satisfiedPercent + unsatisfiedPercent, 100);
+            (totalReports > 0 ? Math.round((totalSat / totalReports) * 100) : 0);
         
         const avgValue = avgReports[q.key];
 
@@ -1023,17 +1112,13 @@ function updateQuarterComparison() {
 
 function showQuarterComparison() {
     const section = document.getElementById("compareSection");
-    const summarySection = document.getElementById("summarySection");
     if (!isCompareVisible) {
         section.style.display = "block";
-        summarySection.style.display = "grid";
         isCompareVisible = true;
         updateQuarterComparison();
-        updateSummarySection();
         section.scrollIntoView({ behavior: 'smooth' });
     } else {
         section.style.display = "none";
-        summarySection.style.display = "none";
         isCompareVisible = false;
     }
 }
